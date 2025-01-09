@@ -14,8 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BibleController {
     private final BibleService bibleService;
-
-    @GetMapping("/bibles")
+   /* @GetMapping("/bibles")
     public ApiResponseDTO<List<BibleResponseDTO>> getBibles(
             @RequestParam String testament,
             @RequestParam(required = false) Integer book,
@@ -28,15 +27,14 @@ public class BibleController {
     public ApiResponseDTO<List<BookResponseDTO>> getBooks(@RequestParam String testament) {
         List<BookResponseDTO> books = bibleService.getBooks(testament);
         return ApiResponseDTO.success("성경 책 목록 조회 완료", books);
-    }
+    }*/
 
     @GetMapping("/bibles/search")
-    public ApiResponseDTO<List<BibleResponseDTO>> search(
-            @RequestParam String mode,
-            @RequestParam String keyword1,
-            @RequestParam(required = false) String keyword2,
-            @RequestParam(required = false) String operator) {
-        List<BibleResponseDTO> searchResults = bibleService.search(mode, keyword1, keyword2, operator);
-        return ApiResponseDTO.success("검색 결과 조회 완료", searchResults);
+    public ApiResponseDTO<?> search(
+
+            @RequestParam(required = false) String keyword1) {
+
+        List<?> results = bibleService.search(keyword1);
+        return ApiResponseDTO.success("조회 완료", results);
     }
 }
