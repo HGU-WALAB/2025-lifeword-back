@@ -1,5 +1,6 @@
 package com.project.bibly_be.config;
 
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.servers.Server;
@@ -14,7 +15,7 @@ public class SwaggerConfig {
     @Bean
     public OpenAPI openAPI() {
         Server server = new Server();
-        server.setUrl("/eax9952_1");
+        server.setUrl("/naimkim");
 
         List<Server> servers = new ArrayList<>();
         servers.add(server);
