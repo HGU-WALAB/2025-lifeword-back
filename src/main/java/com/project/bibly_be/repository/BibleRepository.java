@@ -20,7 +20,6 @@ public interface BibleRepository extends JpaRepository<Bible, Long> {
 
     @Query("SELECT b FROM Bible b WHERE b.sentence LIKE %:keyword%")
     List<Bible> searchByVerse(@Param("keyword") String keyword);
-
     @Query("SELECT b FROM Bible b WHERE b.longLabel = :keyword OR b.shortLabel = :keyword")
     List<Bible> findByTestamentOrBook(@Param("keyword") String keyword);
 
