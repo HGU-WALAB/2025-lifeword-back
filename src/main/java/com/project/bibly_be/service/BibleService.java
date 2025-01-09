@@ -19,6 +19,31 @@ import java.util.stream.Collectors;
 public class BibleService {
     private final BibleRepository bibleRepository;
 
+    public List<BibleResponseDTO> getBibles(String testament, Integer book, Integer chapter) {
+        List<Bible> bibles;
+        if (book == null) {
+            bibles = bibleRepository.findByTestament(testament);
+        } else if (chapter == null) {
+            bibles = bibleRepository.findByTestamentAndBook(testament, book);
+        } else {
+            bibles = bibleRepository.findByTestamentAndBookAndChapter(testament, book, chapter);
+        }
+        return bibles.stream()
+                .map(BibleResponseDTO::from)
+                .collect(Collectors.toList());
+    }
+
+    public List<BookResponseDTO> getBooks(String testament) {
+        List<Object[]> books = bibleRepository.findBooksByTestament(testament);
+        return books.stream()
+                .map(book -> BookResponseDTO.builder()
+                        .book((Integer) book[0])
+                        .long_label((String) book[1])
+                        .short_label((String) book[2])
+                        .testament((String) book[3])
+                        .build())
+                .collect(Collectors.toList());
+    }
     public List<BibleResponseDTO> search(String keyword1) {
         List<Bible> searchResults;
 

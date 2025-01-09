@@ -15,7 +15,7 @@ public class SwaggerConfig {
     @Bean
     public OpenAPI openAPI() {
         Server server = new Server();
-        server.setUrl("/naimkim");
+        server.setUrl("/naimkim_1");
 
         List<Server> servers = new ArrayList<>();
         servers.add(server);
