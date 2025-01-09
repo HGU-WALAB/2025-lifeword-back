@@ -12,7 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;@Service
+import java.util.stream.Collectors;
+@Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class BibleService {
@@ -21,8 +22,12 @@ public class BibleService {
     public List<BibleResponseDTO> search(String keyword1) {
         List<Bible> searchResults;
 
-        // "창세기 1장 1절"
-        if (keyword1.matches("\\S+\\s*\\d+장\\s*\\d+절")) {
+        // 쉼표 구분 검색 (예: "사랑, 하나님" 또는 "창 1,2")
+        if (keyword1.contains(",")) {
+            searchResults = handleCommaSeparatedInput(keyword1);
+        }
+        // "창세기 1장 1절" 등 특정 절 처리
+        else if (keyword1.matches("\\S+\\s*\\d+장\\s*\\d+절")) {
             searchResults = handleSpecificVerse(keyword1);
         }
         // 비정형 입력 (예: "창세기 1:1", "창세기 1장", "창세기 1장 1절~10절")
@@ -38,28 +43,45 @@ public class BibleService {
             searchResults = bibleRepository.searchByVerse(keyword1);
         }
 
+        if (searchResults.isEmpty()) {
+            throw new IllegalArgumentException("해당 범위에 구절이나 장이 없습니다.");
+        }
+
         return searchResults.stream()
                 .map(BibleResponseDTO::from)
                 .collect(Collectors.toList());
     }
 
-    private List<Bible> handleSpecificVerse(String reference) { //여러 조건이 있다보니 "창세기 1장 1절" 이 검색이 되지 않아 메소드를 따로 만듬.
-        // 정규표현식으로 책 이름, 장, 절 추출
+    private List<Bible> handleCommaSeparatedInput(String keyword) {
+        String[] parts = keyword.split(",");
+        List<Bible> results = new ArrayList<>();
+
+        for (String part : parts) {
+            part = part.trim();
+            if (part.matches("\\S+\\s*\\d+[:장]\\s*\\d+.*")) {
+                results.addAll(parseReferenceAndSearch(part));
+            } else {
+                results.addAll(bibleRepository.searchByVerse(part));
+            }
+        }
+
+        return results;
+    }
+
+    private List<Bible> handleSpecificVerse(String reference) {
         String pattern = "^(\\S+)\\s*(\\d+)장\\s*(\\d+)절$";
         Matcher matcher = Pattern.compile(pattern).matcher(reference);
 
         if (matcher.find()) {
-            String bookName = matcher.group(1); // 책 이름
-            int chapter = Integer.parseInt(matcher.group(2)); // 장
-            int verse = Integer.parseInt(matcher.group(3)); // 절
+            String bookName = matcher.group(1);
+            int chapter = Integer.parseInt(matcher.group(2));
+            int verse = Integer.parseInt(matcher.group(3));
 
-            // 책 번호 찾기
             Bible bible = bibleRepository.findFirstByShortLabelOrLongLabel(bookName, bookName).orElse(null);
             if (bible == null) {
-                return new ArrayList<>();
+                throw new IllegalArgumentException("해당 범위에 구절이나 장이 없습니다.");
             }
 
-            // 해당 절만 반환
             return bibleRepository.findByBookAndChapterAndParagraphBetween(
                     bible.getBook(),
                     chapter,
@@ -72,8 +94,7 @@ public class BibleService {
     }
 
     private List<Bible> parseReferenceAndSearch(String reference) {
-        // 정규표현식 패턴들
-        String pattern1 = "^(\\S+)\\s*(\\d+)[장:](\\d+)[-~]?(\\d+)?$"; // ", "창세기 1:1"
+        String pattern1 = "^(\\S+)\\s*(\\d+)[\\s:장]\\s*(\\d+)[-~]?(\\d+)?$"; // "창 1:1", "창세기 1 장 1절", "창 1 :1"
         String pattern2 = "^(\\S+)\\s*(\\d+)장[-~]?$"; // "창세기 1장"
         String pattern3 = "^(\\S+)\\s*(\\d+)장\\s*(\\d+)절[-~](\\d+)절?$"; // "창세기 1장 1절~10절"
 
@@ -83,8 +104,8 @@ public class BibleService {
 
         String bookName;
         int chapter;
-        Integer startVerse = null; // 구절 시작 번호
-        Integer endVerse = null;   // 구절 끝 번호
+        Integer startVerse = null;
+        Integer endVerse = null;
 
         if (matcher3.find()) {
             // "창세기 1장 1절~10절"
@@ -93,7 +114,7 @@ public class BibleService {
             startVerse = Integer.parseInt(matcher3.group(3));
             endVerse = Integer.parseInt(matcher3.group(4));
         } else if (matcher1.find()) {
-            // "창세기 1장 1절" 또는 "창세기 1:1"
+            // "창세기 1장 1절", "창 1:1", "창 1 :1"
             bookName = matcher1.group(1);
             chapter = Integer.parseInt(matcher1.group(2));
             startVerse = Integer.parseInt(matcher1.group(3));
@@ -103,18 +124,15 @@ public class BibleService {
             bookName = matcher2.group(1);
             chapter = Integer.parseInt(matcher2.group(2));
         } else {
-            return new ArrayList<>();
+            throw new IllegalArgumentException("해당 범위에 구절이나 장이 없습니다.");
         }
 
-        // 책 번호 찾기
-        Bible bible = bibleRepository.findFirstByShortLabelOrLongLabel(bookName, bookName)
-                .orElse(null);
+        Bible bible = bibleRepository.findFirstByShortLabelOrLongLabel(bookName, bookName).orElse(null);
         if (bible == null) {
-            return new ArrayList<>();
+            throw new IllegalArgumentException("해당 범위에 구절이나 장이 없습니다.");
         }
 
         if (startVerse != null && endVerse != null) {
-            // 특정 절 범위 검색
             return bibleRepository.findByBookAndChapterAndParagraphBetween(
                     bible.getBook(),
                     chapter,
@@ -122,7 +140,6 @@ public class BibleService {
                     endVerse
             );
         } else {
-            // 특정 장 전체 검색
             return bibleRepository.findByTestamentAndBookAndChapter(bible.getTestament(), bible.getBook(), chapter);
         }
     }
