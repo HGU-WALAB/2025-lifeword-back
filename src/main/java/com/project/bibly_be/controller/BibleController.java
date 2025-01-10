@@ -14,7 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BibleController {
     private final BibleService bibleService;
-   /* @GetMapping("/bibles")
+    @GetMapping("/bibles")
     public ApiResponseDTO<List<BibleResponseDTO>> getBibles(
             @RequestParam String testament,
             @RequestParam(required = false) Integer book,
@@ -27,7 +27,7 @@ public class BibleController {
     public ApiResponseDTO<List<BookResponseDTO>> getBooks(@RequestParam String testament) {
         List<BookResponseDTO> books = bibleService.getBooks(testament);
         return ApiResponseDTO.success("성경 책 목록 조회 완료", books);
-    }*/
+    }
 
     @GetMapping("/bibles/search")
     public ApiResponseDTO<?> search(
