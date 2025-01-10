@@ -1,6 +1,6 @@
 package com.project.bibly_be.sermon.service;
 
-import com.project.bibly_be.exception.ResourceNotFoundException;
+import com.project.bibly_be.sermon.exception.ResourceNotFoundException;
 import com.project.bibly_be.sermon.dto.SermonRequestDTO;
 import com.project.bibly_be.sermon.dto.SermonResponseDTO;
 import com.project.bibly_be.sermon.entity.Sermon;

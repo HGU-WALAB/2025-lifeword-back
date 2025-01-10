@@ -1,7 +1,7 @@
 package com.project.bibly_be.sermon.controller;
 
 
-import com.project.bibly_be.dto.response.ApiResponseDTO;
+import com.project.bibly_be.bible.dto.ApiResponseDTO;
 import com.project.bibly_be.sermon.dto.SermonRequestDTO;
 import com.project.bibly_be.sermon.dto.SermonResponseDTO;
 import com.project.bibly_be.sermon.service.SermonService;
