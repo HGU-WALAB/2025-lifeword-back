@@ -1,17 +1,20 @@
 package com.project.bibly_be.sermon.dto;
 
-import lombok.Getter;
+import lombok.Data;
 
-import java.time.LocalDate;
-import java.util.List;
+import java.util.UUID;
 
-@Getter
-public class SermonRequestDTO {
-    private String owner;
-    private String title;
-    private LocalDate sermonDate;
-    private List<Long> bibleVerseIndexes;
-    private String sermonContent;
-    private List<String> keywords;
+@Data
+public class SermonRequestDto {
+    private UUID sermonOwnerId;
+    private String sermonTitle;
+    private String summary;
+    private String worshipType;
+    private String mainScripture;
+    private String additionalScripture;
+    private String notes;
+    private String recordInfo;
+    private String fileCode;
+    private Boolean isPublic;
+    private String contentText;
 }
-
