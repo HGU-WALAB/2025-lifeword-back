@@ -1,6 +1,8 @@
 package com.project.bibly_be.bible.controller;
 
 import com.project.bibly_be.bible.dto.ApiResponseDTO;
+import com.project.bibly_be.bible.dto.BibleResponseDTO;
+import com.project.bibly_be.bible.dto.BookResponseDTO;
 import com.project.bibly_be.bible.service.BibleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
