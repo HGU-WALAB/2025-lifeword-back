@@ -17,7 +17,7 @@ public class UserResponseDTO {
     private String name;
     private String contact;
     private String church;  // 새 필드
-    private String pastor;  // 새 필드
+    private String job;  // 새 필드
     private String place;   // 새 필드
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -32,7 +32,7 @@ public class UserResponseDTO {
                 .name(user.getName())
                 .contact(user.getContact())
                 .church(user.getChurch())  // 추가된 필드 매핑
-                .pastor(user.getJob())  // 추가된 필드 매핑
+                .job(user.getJob())  // 추가된 필드 매핑
                 .place(user.getPlace())    // 추가된 필드 매핑
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
