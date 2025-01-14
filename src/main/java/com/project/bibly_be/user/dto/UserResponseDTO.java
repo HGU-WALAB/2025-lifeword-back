@@ -16,31 +16,36 @@ public class UserResponseDTO {
     private String email;
     private String name;
     private String contact;
+    private String church;  // 새 필드
+    private String pastor;  // 새 필드
+    private String place;   // 새 필드
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     // 엔티티 -> DTO 변환 메서드
     public static UserResponseDTO from(User user) {
         return UserResponseDTO.builder()
-                .id(user.getId())
+                .id(user.getId())  // userId에 맞게 수정
                 .oauthProvider(user.getOauthProvider())
                 .oauthUid(user.getOauthUid())
                 .email(user.getEmail())
                 .name(user.getName())
                 .contact(user.getContact())
+                .church(user.getChurch())  // 추가된 필드 매핑
+                .pastor(user.getPastor())  // 추가된 필드 매핑
+                .place(user.getPlace())    // 추가된 필드 매핑
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
     }
 
     /**
-     * 검증(확인) 용도로 쓰이는 서브 DTO라고 가정
+     * 검증(확인) 용도로 쓰이는 서브 DTO
      */
     @Getter
     @Builder
     public static class VerifyResponse {
         private boolean exists;
-        //private Long userId; //
         private UUID userId;
         private String oauthUid;
     }
