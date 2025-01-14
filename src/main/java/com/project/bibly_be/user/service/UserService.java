@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
-
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -23,6 +22,9 @@ public class UserService {
                 .email(request.getEmail())
                 .name(request.getName())
                 .contact(request.getContact())
+                .church(request.getChurch())
+                .pastor(request.getPastor())
+                .place(request.getPlace())
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -37,7 +39,6 @@ public class UserService {
 
         return UserResponseDTO.VerifyResponse.builder()
                 .exists(user != null)
-                // userId = UUID
                 .userId(user != null ? user.getId() : null)
                 .oauthUid(oauthUid)
                 .build();
