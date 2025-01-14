@@ -15,7 +15,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
+    private UUID Id; //오류 생기면 String으로 받아오기.
 
     @Column(name = "oauth_provider")
     private String oauthProvider;
@@ -24,8 +24,18 @@ public class User {
     @Column(name = "oauth_uid", unique = true)
     private String oauthUid;
 
+
     @Column(name = "email")
     private String email;
+
+    @Column(name="church")
+    private String church;
+
+    @Column(name="pastor")
+    private String pastor;
+
+    @Column(name="place")
+    private String place;
 
     @Column(name = "name")
     private String name;
@@ -40,11 +50,14 @@ public class User {
     private LocalDateTime updatedAt;
 
     @Builder
-    public User(String oauthProvider, String oauthUid, String email, String name, String contact) {
-        this.id = UUID.randomUUID();
+    public User(String oauthProvider, String oauthUid, String email, String name, String contact,String church, String pastor, String place) {
+        this.Id = UUID.randomUUID();
         this.oauthProvider = oauthProvider;
         this.oauthUid = oauthUid;
         this.email = email;
+        this.church= church;
+        this.pastor=pastor;
+        this.place=place;
         this.name = name;
         this.contact = contact;
         this.createdAt = LocalDateTime.now();
