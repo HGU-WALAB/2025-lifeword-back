@@ -27,15 +27,15 @@ repositories {
 
 // 세 개의 custom war task 생성
 task war1(type: War) {
-    archiveFileName = 'naimkim_1.war'
+    archiveFileName = 'diggydog_1.war'
 }
 
 task war2(type: War) {
-    archiveFileName = 'naimkim_2.war'
+    archiveFileName = 'diggydog_2.war'
 }
 
 task war3(type: War) {
-    archiveFileName = 'naimkim_3.war'
+    archiveFileName = 'diggydog_3.war'
 }
 
 // 모든 war 파일을 한 번에 생성하는 task

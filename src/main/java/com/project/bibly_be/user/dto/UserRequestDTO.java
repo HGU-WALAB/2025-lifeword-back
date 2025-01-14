@@ -6,5 +6,11 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 public class UserRequestDTO {
-    private String kakaoUid;
+    private String oauthProvider;  // 예: "kakao", "google", "apple"
+    private String oauthUid;
+    private String name;
+    private String contact;
+    private String email;
+
+
 }
