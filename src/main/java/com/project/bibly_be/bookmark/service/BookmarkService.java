@@ -24,7 +24,7 @@ public class BookmarkService {
     private final BibleRepository bibleRepository;
 
     public BookmarkResponseDTO createBookmark(String kakaoUid, BookmarkRequestDTO request) {
-        User user = userRepository.findByKakaoUid(kakaoUid)
+        User user = userRepository.findByOauthUid(kakaoUid)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         Bible verse = bibleRepository.findById(request.getVerseId())
@@ -41,7 +41,7 @@ public class BookmarkService {
 
     @Transactional(readOnly = true)
     public List<BookmarkResponseDTO> getBookmarks(String kakaoUid) {
-        User user = userRepository.findByKakaoUid(kakaoUid)
+        User user = userRepository.findByOauthUid(kakaoUid)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         return bookmarkRepository.findByUser(user).stream()
@@ -50,7 +50,7 @@ public class BookmarkService {
     }
 
     public void deleteBookmark(String kakaoUid, Long verseId) {
-        User user = userRepository.findByKakaoUid(kakaoUid)
+        User user = userRepository.findByOauthUid(kakaoUid)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         bookmarkRepository.deleteByUserAndVerseIdx(user, verseId);

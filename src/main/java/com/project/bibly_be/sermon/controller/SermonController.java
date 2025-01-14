@@ -1,44 +1,70 @@
 package com.project.bibly_be.sermon.controller;
 
-
-import com.project.bibly_be.bible.dto.ApiResponseDTO;
-import com.project.bibly_be.sermon.dto.SermonRequestDTO;
-import com.project.bibly_be.sermon.dto.SermonResponseDTO;
+import com.project.bibly_be.sermon.dto.SermonRequestDto;
+import com.project.bibly_be.sermon.dto.SermonResponseDto;
 import com.project.bibly_be.sermon.service.SermonService;
-import io.swagger.v3.oas.annotations.Operation;
-import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
+
 
 @RestController
-@RequestMapping("/api/v1/sermons")
-@RequiredArgsConstructor
+@RequestMapping("/api/sermons")
 public class SermonController {
+
     private final SermonService sermonService;
 
+    public SermonController(SermonService sermonService) {
+        this.sermonService = sermonService;
+    }
+
+    // Create a new sermon
+    @PostMapping("/sermons")
+    public ResponseEntity<SermonResponseDto> createSermon(
+            @RequestBody SermonRequestDto sermonRequestDto,
+            @RequestHeader("loggedInUserUuid") String loggedInUserUuid) {
+        UUID userUuid = UUID.fromString(loggedInUserUuid);
+        SermonResponseDto response = sermonService.createSermon(sermonRequestDto, userUuid);
+        return ResponseEntity.ok(response);
+    }
+
+
+
+    // Get all sermons (optionally filtered by public status)
     @GetMapping
-    @Operation(summary = "설교들 리스트 받아오기!!!! ( SermonList )", description = "아직 설교 성경 구절은 ? 인텍스만 ..")
-    public ApiResponseDTO<List<SermonResponseDTO>> getAllSermons() {
-        List<SermonResponseDTO> sermons = sermonService.getAllSermons();
-        return ApiResponseDTO.success(
-                sermons.isEmpty() ? "설교 없고" : "설교 리스트 잘 받아왔고",
-                sermons
-        );
+    public ResponseEntity<List<SermonResponseDto>> getAllSermons(@RequestParam(required = false) Boolean isPublic) {
+        // Assume a method in the service layer to fetch sermons based on the public flag
+        List<SermonResponseDto> sermons = sermonService.getAllSermons(isPublic);
+        return ResponseEntity.ok(sermons);
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "선택한 설교 디테일 불러오기 룰루 ( SermonDetail )", description = " ㅋㅋ 예")
-    public ApiResponseDTO<SermonResponseDTO> getSermonDetails(@PathVariable Long id) {
-        SermonResponseDTO sermon = sermonService.getSermonDetails(id);
-        return ApiResponseDTO.success("선택한 설교 내용 잘 받아왔고", sermon);
+    // Get a sermon by ID
+    @GetMapping("/{sermonId}")
+    public ResponseEntity<SermonResponseDto> getSermonById(@PathVariable Long sermonId) {
+        SermonResponseDto response = sermonService.getSermonById(sermonId);
+        return ResponseEntity.ok(response);
     }
 
-    @PostMapping
-    @Operation(summary = "설교 추가하기 ( AddSermon )", description = "json 으로 받긴 하는데 원하는 형태 있나유?")
-    public ApiResponseDTO<Void> addSermon(@RequestBody SermonRequestDTO requestDTO) {
-        sermonService.addSermon(requestDTO);
-        return ApiResponseDTO.success("설교 잘 추가했고", null);
+    // Update a sermon
+    @PatchMapping("/{sermonId}")
+    public ResponseEntity<SermonResponseDto> patchSermon(
+            @PathVariable Long sermonId,
+            @RequestBody SermonRequestDto sermonRequestDto,
+            @RequestHeader("loggedInUserId") String loggedInUserId) {
+        SermonResponseDto response = sermonService.updateSermon(sermonId, sermonRequestDto, loggedInUserId);
+        return ResponseEntity.ok(response);
+    }
+
+
+    // Delete a sermon
+    @DeleteMapping("/{sermonId}")
+    public ResponseEntity<Void> deleteSermon(
+            @PathVariable Long sermonId,
+            @RequestHeader("loggedInUserId") String loggedInUserId
+    ) {
+        sermonService.deleteSermon(sermonId, loggedInUserId);
+        return ResponseEntity.noContent().build();
     }
 }
-

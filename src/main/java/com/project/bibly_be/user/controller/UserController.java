@@ -21,8 +21,9 @@ public class UserController {
 
     @GetMapping("/verify")
     public ApiResponseDTO<UserResponseDTO.VerifyResponse> verifyUser(
-            @RequestParam("kakaoUid") String kakaoUid) {  // 헤더에서 파라미터로 변경
-        UserResponseDTO.VerifyResponse response = userService.verifyUser(kakaoUid);
+            //@RequestParam("kakaoUid") String kakaoUid) {  // 헤더에서 파라미터로 변경
+            @RequestParam("oauthUid") String oauthUid){
+        UserResponseDTO.VerifyResponse response = userService.verifyUser(oauthUid);
         return ApiResponseDTO.success("사용자 확인 완료", response);
     }
 }
