@@ -32,7 +32,7 @@ public class UserResponseDTO {
                 .name(user.getName())
                 .contact(user.getContact())
                 .church(user.getChurch())  // 추가된 필드 매핑
-                .pastor(user.getPastor())  // 추가된 필드 매핑
+                .pastor(user.getJob())  // 추가된 필드 매핑
                 .place(user.getPlace())    // 추가된 필드 매핑
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())

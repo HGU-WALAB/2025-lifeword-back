@@ -31,8 +31,8 @@ public class User {
     @Column(name="church")
     private String church;
 
-    @Column(name="pastor")
-    private String pastor;
+    @Column(name="job")
+    private String job;
 
     @Column(name="place")
     private String place;
@@ -56,7 +56,7 @@ public class User {
         this.oauthUid = oauthUid;
         this.email = email;
         this.church= church;
-        this.pastor=pastor;
+        this.job=job;
         this.place=place;
         this.name = name;
         this.contact = contact;

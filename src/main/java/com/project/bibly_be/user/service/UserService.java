@@ -23,7 +23,7 @@ public class UserService {
                 .name(request.getName())
                 .contact(request.getContact())
                 .church(request.getChurch())
-                .pastor(request.getPastor())
+                .pastor(request.getJob())
                 .place(request.getPlace())
                 .build();
 
