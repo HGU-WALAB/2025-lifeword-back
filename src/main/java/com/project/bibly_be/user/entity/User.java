@@ -50,7 +50,7 @@ public class User {
     private LocalDateTime updatedAt;
 
     @Builder
-    public User(String oauthProvider, String oauthUid, String email, String name, String contact,String church, String pastor, String place) {
+    public User(String oauthProvider, String oauthUid, String email, String name, String contact,String church, String job, String place) {
         this.Id = UUID.randomUUID();
         this.oauthProvider = oauthProvider;
         this.oauthUid = oauthUid;
