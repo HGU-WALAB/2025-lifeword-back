@@ -8,5 +8,4 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, UUID> {
 
     Optional<User> findByOauthUid(String oauthUid);
-    boolean existsByOauthUid(String oauthUid);
 }

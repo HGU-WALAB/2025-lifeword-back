@@ -12,8 +12,9 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor
 public class User {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
     @Column(name = "oauth_provider")
@@ -40,6 +41,7 @@ public class User {
 
     @Builder
     public User(String oauthProvider, String oauthUid, String email, String name, String contact) {
+        this.id = UUID.randomUUID();
         this.oauthProvider = oauthProvider;
         this.oauthUid = oauthUid;
         this.email = email;
