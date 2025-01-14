@@ -27,11 +27,11 @@ repositories {
 
 // 세 개의 custom war task 생성
 task war1(type: War) {
-    archiveFileName = 'diggydog_1.war'
+    archiveFileName = 'naimkim_1.war'
 }
 
 task war2(type: War) {
-    archiveFileName = 'diggydog_2.war'
+    archiveFileName = 'naimkim_1.war'
 }
 
 task war3(type: War) {
