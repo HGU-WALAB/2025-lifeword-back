@@ -13,6 +13,7 @@ public class UserRequestDTO {
     private String name;
     private String contact;
     private String email;
+    private String password;
     private String job;
     private String place;
     private String church;
