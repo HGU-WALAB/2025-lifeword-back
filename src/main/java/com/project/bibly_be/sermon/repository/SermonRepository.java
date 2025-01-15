@@ -10,7 +10,6 @@ import java.util.List;
 public interface SermonRepository extends JpaRepository<Sermon, Long> {
 
     List<Sermon> findByIsPublicTrue();
-
     boolean existsByFileCode(String fileCode);
 
 

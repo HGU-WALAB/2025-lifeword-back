@@ -22,17 +22,17 @@ public class SermonController {
 
 
 
-    // Get all public sermons
+    // GET all public sermons
     @Operation(summary = "public 되어있는 설교 다 불러오기 룰루 ( SermonPublicList) ")
     @GetMapping("/publiclist")
     public List<SermonResponseDTO> getAllPublicSermons() {
         return sermonService.getAllPublicSermons();
     }
 
-    // Create a new sermon
+    // CREATE new sermon
     @Operation(summary = "설교 추가 ( AddSermon ) ")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Successfully created a new sermon"),
+            @ApiResponse(responseCode = "201", description = "Successfully created new sermon"),
             @ApiResponse(responseCode = "400", description = "Invalid request payload"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
@@ -41,7 +41,7 @@ public class SermonController {
         return sermonService.createSermon(requestDTO);
     }
 
-    // Update a sermon (PATCH)
+    // PATCH sermon
     @Operation(summary = "설교 수정띠 , 로그인된  ID 보내 주시면 비교해서 업뎃해줌( UpdateSermon ) ")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Successfully updated the sermon"),
@@ -58,7 +58,7 @@ public class SermonController {
     }
 
 
-    // Delete a sermon
+    // DELETE sermon
     @Operation(summary = "설교 삭제. 낄낄 PATCH 과 같이 로그인된 유저 아디도 보내주셈( DeleteSermon ) ")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Successfully deleted the sermon"),
@@ -71,6 +71,5 @@ public class SermonController {
                              @RequestParam("userId") String loggedInUserId) {
         sermonService.deleteSermon(sermonId, loggedInUserId);
     }
-
 
 }
