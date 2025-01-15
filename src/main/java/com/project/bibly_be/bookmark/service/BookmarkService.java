@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,8 +24,8 @@ public class BookmarkService {
     private final UserRepository userRepository;
     private final BibleRepository bibleRepository;
 
-    public BookmarkResponseDTO createBookmark(String kakaoUid, BookmarkRequestDTO request) {
-        User user = userRepository.findByOauthUid(kakaoUid)
+    public BookmarkResponseDTO createBookmark(UUID userId, BookmarkRequestDTO request) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         Bible verse = bibleRepository.findById(request.getVerseId())
@@ -40,8 +41,8 @@ public class BookmarkService {
     }
 
     @Transactional(readOnly = true)
-    public List<BookmarkResponseDTO> getBookmarks(String kakaoUid) {
-        User user = userRepository.findByOauthUid(kakaoUid)
+    public List<BookmarkResponseDTO> getBookmarks(UUID userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         return bookmarkRepository.findByUser(user).stream()
@@ -49,8 +50,8 @@ public class BookmarkService {
                 .collect(Collectors.toList());
     }
 
-    public void deleteBookmark(String kakaoUid, Long verseId) {
-        User user = userRepository.findByOauthUid(kakaoUid)
+    public void deleteBookmark(UUID userId, Long verseId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         bookmarkRepository.deleteByUserAndVerseIdx(user, verseId);
