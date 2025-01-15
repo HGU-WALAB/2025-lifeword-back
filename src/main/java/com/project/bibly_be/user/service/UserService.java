@@ -20,6 +20,7 @@ public class UserService {
                 .oauthProvider(request.getOauthProvider())
                 .oauthUid(request.getOauthUid())
                 .email(request.getEmail())
+                .password(request.getPassword())
                 .name(request.getName())
                 .contact(request.getContact())
                 .church(request.getChurch())
@@ -40,7 +41,6 @@ public class UserService {
         return UserResponseDTO.VerifyResponse.builder()
                 .exists(user != null)
                 .userId(user != null ? user.getId() : null)
-                .oauthUid(oauthUid)
                 .build();
     }
 }
