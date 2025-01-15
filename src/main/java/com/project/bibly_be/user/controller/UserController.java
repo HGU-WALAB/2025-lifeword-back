@@ -33,7 +33,7 @@ public class UserController {
             UserResponseDTO user = userService.createUser(request);
             return ApiResponseDTO.success("사용자 등록 완료", user);
         } catch (IllegalArgumentException e) {
-            return ApiResponseDTO.error("필수 입력 값이 누락되었습니다.", HttpStatus.BAD_REQUEST.value());
+            return ApiResponseDTO.error(e.getMessage(), HttpStatus.BAD_REQUEST.value());
         } catch (Exception e) {
             return ApiResponseDTO.error("서버 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
@@ -42,22 +42,66 @@ public class UserController {
     /**
      * 사용자 존재 여부 확인 API
      */
-    @Operation(summary = "사용자 존재 여부 확인 (VerifyUser)")
+    @Operation(summary = "사용자 존재 여부 확인 (VerifyUser) [kakao/google] ")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "사용자 확인 완료"),
             @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
             @ApiResponse(responseCode = "500", description = "서버 오류 발생")
     })
-    @GetMapping("/verify")
+    @GetMapping("/verify/kakao-google") // kakao google case
     public ApiResponseDTO<UserResponseDTO.VerifyResponse> verifyUser(
-            @RequestParam("oauthUid") String oauthUid) {
+            @RequestParam("oauthUid") String oauthUid
+            )
+    {
         try {
             UserResponseDTO.VerifyResponse response = userService.verifyUser(oauthUid);
             return ApiResponseDTO.success("사용자 확인 완료", response);
         } catch (UsernameNotFoundException e) {
-            return ApiResponseDTO.error("사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND.value());
+            return ApiResponseDTO.error(e.getMessage(), HttpStatus.NOT_FOUND.value());
         } catch (Exception e) {
-            return ApiResponseDTO.error("서버 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            return ApiResponseDTO.error(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
+    }
+
+
+    @Operation(summary = "사용자 존재 여부 확인 (VerifyUser) [bibly]")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "사용자 확인 완료"),
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 오류 발생")
+    })
+    @GetMapping("/verify/bibly") // bibly case
+    public ApiResponseDTO<UserResponseDTO.VerifyResponse> verifyUser(
+            @RequestParam("email") String email, @RequestParam("password") String password
+    )
+    {
+        try {
+            UserResponseDTO.VerifyResponse response = userService.verifyUser(email, password);
+            return ApiResponseDTO.success("사용자 확인 완료", response);
+        } catch (UsernameNotFoundException e) {
+            return ApiResponseDTO.error(e.getMessage(), HttpStatus.NOT_FOUND.value());
+        } catch (Exception e) {
+            return ApiResponseDTO.error(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
+        }
+    }
+
+    @Operation(summary = "OauthProvider == bibly  중 email 중복 여부 확인 [bibly]")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "이매일 검색 왼료 (OauthProvider 가 bibly 중 검색)"),
+            @ApiResponse(responseCode = "404", description = "잘못된 요청 데이터"),
+            @ApiResponse(responseCode = "500", description = "서버 오류 발생")
+    })
+    @GetMapping("/verify/bibly-emailCheck") // bibly case
+    public boolean verifyUserByEmail(
+            @RequestParam("email") String email
+    )
+    {
+        try {
+            return userService.verifyUserByEmail(email);
+            //return userService.verifyUserByEmail(email);
+        } catch (Exception e) {
+            throw new RuntimeException("서버 오류 발생");
+        }
+
     }
 }
