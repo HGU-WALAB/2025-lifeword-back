@@ -5,6 +5,8 @@ import com.project.bibly_be.sermon.dto.SermonResponseDTO;
 import com.project.bibly_be.sermon.service.SermonService;
 import com.project.bibly_be.user.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,6 +31,11 @@ public class SermonController {
 
     // Create a new sermon
     @Operation(summary = "설교 추가 ( AddSermon ) ")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Successfully created a new sermon"),
+            @ApiResponse(responseCode = "400", description = "Invalid request payload"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @PostMapping
     public SermonResponseDTO createSermon(@RequestBody SermonRequestDTO requestDTO) {
         return sermonService.createSermon(requestDTO);
@@ -36,6 +43,13 @@ public class SermonController {
 
     // Update a sermon (PATCH)
     @Operation(summary = "설교 수정띠 , 로그인된  ID 보내 주시면 비교해서 업뎃해줌( UpdateSermon ) ")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Successfully updated the sermon"),
+            @ApiResponse(responseCode = "400", description = "Invalid request payload"),
+            @ApiResponse(responseCode = "404", description = "Sermon not found"),
+            @ApiResponse(responseCode = "403", description = "Unauthorized to update this sermon"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @PatchMapping("/{sermonId}")
     public SermonResponseDTO updateSermon(@PathVariable Long sermonId,
                                           @RequestBody SermonRequestDTO requestDTO,
@@ -46,6 +60,12 @@ public class SermonController {
 
     // Delete a sermon
     @Operation(summary = "설교 삭제. 낄낄 PATCH 과 같이 로그인된 유저 아디도 보내주셈( DeleteSermon ) ")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Successfully deleted the sermon"),
+            @ApiResponse(responseCode = "404", description = "Sermon not found"),
+            @ApiResponse(responseCode = "403", description = "Unauthorized to delete this sermon"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @DeleteMapping("/{sermonId}")
     public void deleteSermon(@PathVariable Long sermonId,
                              @RequestParam("userId") String loggedInUserId) {

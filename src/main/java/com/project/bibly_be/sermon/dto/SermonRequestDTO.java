@@ -1,5 +1,6 @@
 package com.project.bibly_be.sermon.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,5 +21,7 @@ public class SermonRequestDTO {
     private String notes;         // Optional
     private String recordInfo;    // Optional
     private String contentText;   // Required: The single content for the sermon
+
+    @JsonProperty("public")
     private boolean isPublic;
 }

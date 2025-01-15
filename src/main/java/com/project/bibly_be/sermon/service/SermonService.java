@@ -35,17 +35,17 @@ public class SermonService {
         User user = userRepository.findById(requestDTO.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // Parse sermonDate from String to LocalDateTime
+        // Parse sermonDate
         LocalDate sermonDate = LocalDate.parse(requestDTO.getSermonDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
-        // Generate file code based on the sermonDate
-        String fileCode = sermonDate.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        // Generate unique file code
+        String fileCode = generateUniqueFileCode(sermonDate);
 
         // Create and save the Sermon entity
         Sermon sermon = Sermon.builder()
                 .owner(user)
-                .sermonDate(sermonDate.atStartOfDay()) // Convert LocalDate to LocalDateTime
-                .isPublic(true) // Default to public
+                .sermonDate(sermonDate.atStartOfDay())
+                .isPublic(requestDTO.isPublic())
                 .worshipType(requestDTO.getWorshipType())
                 .mainScripture(requestDTO.getMainScripture())
                 .additionalScripture(requestDTO.getAdditionalScripture())
@@ -53,15 +53,15 @@ public class SermonService {
                 .summary(requestDTO.getSummary())
                 .notes(requestDTO.getNotes())
                 .recordInfo(requestDTO.getRecordInfo())
-                .fileCode(fileCode) // Auto-generated file code
+                .fileCode(fileCode)
                 .build();
 
         Sermon savedSermon = sermonRepository.save(sermon);
 
-        // Create and save the single Content entity
+        // Create and save the Content entity
         Content content = Content.builder()
                 .sermon(savedSermon)
-                .fileCode(fileCode) // Use the sermon fileCode
+                .fileCode(fileCode)
                 .contentText(requestDTO.getContentText())
                 .build();
 
@@ -83,13 +83,23 @@ public class SermonService {
                 .notes(savedSermon.getNotes())
                 .recordInfo(savedSermon.getRecordInfo())
                 .fileCode(savedSermon.getFileCode())
-                .contents(Collections.singletonList(ContentDTO.builder()
-                        .contentId(content.getContentId())
-                        .fileCode(content.getFileCode())
-                        .contentText(content.getContentText())
-                        .build()))
                 .build();
     }
+
+    private String generateUniqueFileCode(LocalDate sermonDate) {
+        String baseFileCode = sermonDate.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String fileCode = baseFileCode;
+        int counter = 1;
+
+        // Check for existing fileCode in the database
+        while (sermonRepository.existsByFileCode(fileCode)) {
+            fileCode = baseFileCode + "_" + counter;
+            counter++;
+        }
+
+        return fileCode;
+    }
+
 
     // Get all public sermons
     public List<SermonResponseDTO> getAllPublicSermons() {
