@@ -1,17 +1,20 @@
 package com.project.bibly_be.sermon.dto;
 
-import lombok.Data;
+import lombok.Builder;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.List;
 
-@Data
-public class SermonResponseDto {
+@Getter
+@Builder
+public class SermonResponseDTO {
     private Long sermonId;
-    private UUID sermonOwnerId;
-    private String sermonOwner;
-    private Boolean isPublic;
-
+    private String ownerName;
+    private LocalDateTime sermonDate;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private boolean isPublic;
     private String worshipType;
     private String mainScripture;
     private String additionalScripture;
@@ -20,9 +23,5 @@ public class SermonResponseDto {
     private String notes;
     private String recordInfo;
     private String fileCode;
-
-    private LocalDateTime sermonCreatedAt;
-    private LocalDateTime sermonUpdatedAt;
-
-    private String contentText;
+    private List<ContentDTO> contents;
 }
