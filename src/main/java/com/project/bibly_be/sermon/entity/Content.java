@@ -1,24 +1,47 @@
 package com.project.bibly_be.sermon.entity;
-import lombok.Data;
 
+import lombok.*;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-@Data
 @Entity
+@Table(name = "contents")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Content {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long contentId;
 
-    @OneToOne
-    @JoinColumn(name = "sermon_id", referencedColumnName = "sermonId")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sermon_id", nullable = false)
     private Sermon sermon;
 
-    @Lob
-    private String contentText; // Full HTML content
+    @Column(nullable = false, unique = true)
+    private String fileCode;
 
-    private LocalDateTime contentCreatedAt = LocalDateTime.now();
-    private LocalDateTime contentUpdatedAt = LocalDateTime.now();
+    @Lob
+    @Column(nullable = false)
+    private String contentText;
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }

@@ -1,163 +1,94 @@
 package com.project.bibly_be.sermon.service;
 
-import com.project.bibly_be.sermon.dto.SermonRequestDto;
-import com.project.bibly_be.sermon.dto.SermonResponseDto;
+import com.project.bibly_be.sermon.dto.ContentDTO;
+import com.project.bibly_be.sermon.dto.SermonRequestDTO;
+import com.project.bibly_be.sermon.dto.SermonResponseDTO;
 import com.project.bibly_be.sermon.entity.Content;
 import com.project.bibly_be.sermon.entity.Sermon;
-import com.project.bibly_be.sermon.repo.ContentRepo;
-import com.project.bibly_be.sermon.repo.SermonRepo;
+import com.project.bibly_be.sermon.repository.ContentRepository;
+import com.project.bibly_be.sermon.repository.SermonRepository;
 import com.project.bibly_be.user.entity.User;
 import com.project.bibly_be.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class SermonService {
-
-    private final SermonRepo sermonRepo;
+    private final SermonRepository sermonRepository;
+    private final ContentRepository contentRepository;
     private final UserRepository userRepository;
 
-    public SermonService(UserRepository userRepository, SermonRepo sermonRepo) {
-        this.userRepository = userRepository;
-        this.sermonRepo = sermonRepo;
+    public SermonResponseDTO createSermon(SermonRequestDTO requestDTO) {
+        // Fetch user
+        User user = userRepository.findById(requestDTO.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // Parse sermonDate from String to LocalDateTime
+        LocalDate sermonDate = LocalDate.parse(requestDTO.getSermonDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+
+        // Generate file code based on the sermonDate
+        String fileCode = sermonDate.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+
+        // Create and save the Sermon entity
+        Sermon sermon = Sermon.builder()
+                .owner(user)
+                .sermonDate(sermonDate.atStartOfDay()) // Convert LocalDate to LocalDateTime
+                .isPublic(true) // Default to public
+                .worshipType(requestDTO.getWorshipType())
+                .mainScripture(requestDTO.getMainScripture())
+                .additionalScripture(requestDTO.getAdditionalScripture())
+                .sermonTitle(requestDTO.getSermonTitle())
+                .summary(requestDTO.getSummary())
+                .notes(requestDTO.getNotes())
+                .recordInfo(requestDTO.getRecordInfo())
+                .fileCode(fileCode) // Auto-generated file code
+                .build();
+
+        Sermon savedSermon = sermonRepository.save(sermon);
+
+        // Create and save the single Content entity
+        Content content = Content.builder()
+                .sermon(savedSermon)
+                .fileCode(fileCode) // Use the sermon fileCode
+                .contentText(requestDTO.getContentText())
+                .build();
+
+        contentRepository.save(content);
+
+        // Return response
+        return SermonResponseDTO.builder()
+                .sermonId(savedSermon.getSermonId())
+                .ownerName(savedSermon.getOwner().getName())
+                .sermonDate(savedSermon.getSermonDate())
+                .createdAt(savedSermon.getCreatedAt())
+                .updatedAt(savedSermon.getUpdatedAt())
+                .isPublic(savedSermon.isPublic())
+                .worshipType(savedSermon.getWorshipType())
+                .mainScripture(savedSermon.getMainScripture())
+                .additionalScripture(savedSermon.getAdditionalScripture())
+                .sermonTitle(savedSermon.getSermonTitle())
+                .summary(savedSermon.getSummary())
+                .notes(savedSermon.getNotes())
+                .recordInfo(savedSermon.getRecordInfo())
+                .fileCode(savedSermon.getFileCode())
+                .contents(Collections.singletonList(ContentDTO.builder()
+                        .contentId(content.getContentId())
+                        .fileCode(content.getFileCode())
+                        .contentText(content.getContentText())
+                        .build()))
+                .build();
     }
 
-    public SermonResponseDto createSermon(SermonRequestDto requestDto, UUID loggedInUserUuid) {
-        // Fetch user by UUID
-        User user = userRepository.findById(loggedInUserUuid)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        // Populate sermon with user information
-        Sermon sermon = new Sermon();
-        sermon.setSermonOwnerId(user.getId());
-        sermon.setSermonOwner(user.getName());
-        sermon.setWorshipType(requestDto.getWorshipType());
-        sermon.setMainScripture(requestDto.getMainScripture());
-        sermon.setAdditionalScripture(requestDto.getAdditionalScripture());
-        sermon.setSermonTitle(requestDto.getSermonTitle());
-        sermon.setSummary(requestDto.getSummary());
-        sermon.setNotes(requestDto.getNotes());
-        sermon.setRecordInfo(requestDto.getRecordInfo());
-        sermon.setFileCode(requestDto.getFileCode());
-        sermon.setIsPublic(requestDto.getIsPublic());
-        sermon.setSermonUpdatedAt(LocalDateTime.now());
-
-        // Add content
-        Content content = new Content();
-        content.setContentText(requestDto.getContentText());
-        content.setSermon(sermon);
-
-        sermon.setContent(content);
-
-        sermonRepo.save(sermon);
-        return mapToResponseDto(sermon);
-    }
-
-
-    public SermonResponseDto updateSermon(Long sermonId, SermonRequestDto requestDto, String loggedInUserId) {
-        Sermon sermon = sermonRepo.findById(sermonId)
-                .orElseThrow(() -> new RuntimeException("Sermon not found"));
-
-        if (!sermon.getSermonOwnerId().equals(loggedInUserId)) {
-            throw new RuntimeException("Unauthorized to update this sermon");
-        }
-
-        updateSermonFields(sermon, requestDto);
-
-        Content content = sermon.getContent();
-        if (content != null && requestDto.getContentText() != null &&
-                !requestDto.getContentText().equals(content.getContentText())) {
-            content.setContentText(requestDto.getContentText());
-            content.setContentUpdatedAt(LocalDateTime.now());
-        }
-
-        sermon.setSermonUpdatedAt(LocalDateTime.now());
-        sermonRepo.save(sermon);
-
-        return mapToResponseDto(sermon);
-    }
-
-    private void updateSermonFields(Sermon sermon, SermonRequestDto requestDto) {
-        if (requestDto.getSermonTitle() != null) {
-            sermon.setSermonTitle(requestDto.getSermonTitle());
-        }
-        if (requestDto.getSummary() != null) {
-            sermon.setSummary(requestDto.getSummary());
-        }
-        if (requestDto.getWorshipType() != null) {
-            sermon.setWorshipType(requestDto.getWorshipType());
-        }
-        if (requestDto.getMainScripture() != null) {
-            sermon.setMainScripture(requestDto.getMainScripture());
-        }
-        if (requestDto.getAdditionalScripture() != null) {
-            sermon.setAdditionalScripture(requestDto.getAdditionalScripture());
-        }
-        if (requestDto.getRecordInfo() != null) {
-            sermon.setRecordInfo(requestDto.getRecordInfo());
-        }
-        if (requestDto.getFileCode() != null) {
-            sermon.setFileCode(requestDto.getFileCode());
-        }
-        if (requestDto.getIsPublic() != null) {
-            sermon.setIsPublic(requestDto.getIsPublic());
-        }
-
-    }
-
-    public SermonResponseDto getSermonById(Long sermonId) {
-        Sermon sermon = sermonRepo.findById(sermonId)
-                .orElseThrow(() -> new RuntimeException("Sermon not found"));
-        return mapToResponseDto(sermon);
-    }
-
-    public void deleteSermon(Long sermonId, String loggedInUserId) {
-        Sermon sermon = sermonRepo.findById(sermonId)
-                .orElseThrow(() -> new RuntimeException("Sermon not found"));
-
-        if (!sermon.getSermonOwnerId().equals(loggedInUserId)) {
-            throw new RuntimeException("Unauthorized to delete this sermon");
-        }
-
-        sermonRepo.delete(sermon);
-    }
-
-    public List<SermonResponseDto> getAllSermons(Boolean isPublic) {
-        List<Sermon> sermons;
-        if (isPublic != null) {
-            sermons = sermonRepo.findByIsPublic(isPublic);
-        } else {
-            sermons = sermonRepo.findAll();
-        }
-
-        return sermons.stream()
-                .map(this::mapToResponseDto)
-                .collect(Collectors.toList());
-    }
-
-    private SermonResponseDto mapToResponseDto(Sermon sermon) {
-        SermonResponseDto dto = new SermonResponseDto();
-        dto.setSermonId(sermon.getSermonId());
-        dto.setSermonOwnerId(sermon.getSermonOwnerId());
-        dto.setSermonOwner(sermon.getSermonOwner());
-        dto.setIsPublic(sermon.getIsPublic());
-        dto.setWorshipType(sermon.getWorshipType());
-        dto.setMainScripture(sermon.getMainScripture());
-        dto.setAdditionalScripture(sermon.getAdditionalScripture());
-        dto.setSermonTitle(sermon.getSermonTitle());
-        dto.setSummary(sermon.getSummary());
-        dto.setNotes(sermon.getNotes());
-        dto.setRecordInfo(sermon.getRecordInfo());
-        dto.setFileCode(sermon.getFileCode());
-        dto.setSermonCreatedAt(sermon.getSermonCreatedAt());
-        dto.setSermonUpdatedAt(sermon.getSermonUpdatedAt());
-        if (sermon.getContent() != null) {
-            dto.setContentText(sermon.getContent().getContentText());
-        }
-        return dto;
-    }
 }
