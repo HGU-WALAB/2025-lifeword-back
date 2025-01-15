@@ -8,5 +8,7 @@ import java.util.List;
 
 @Repository
 public interface SermonRepository extends JpaRepository<Sermon, Long> {
-    List<Sermon> findByIsPublic(Boolean isPublic);
+
+    List<Sermon> findByIsPublicTrue();
+
 }

@@ -20,4 +20,5 @@ public class SermonRequestDTO {
     private String notes;         // Optional
     private String recordInfo;    // Optional
     private String contentText;   // Required: The single content for the sermon
+    private boolean isPublic;
 }

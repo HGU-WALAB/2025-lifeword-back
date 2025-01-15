@@ -91,4 +91,83 @@ public class SermonService {
                 .build();
     }
 
+    // Get all public sermons
+    public List<SermonResponseDTO> getAllPublicSermons() {
+        return sermonRepository.findByIsPublicTrue().stream()
+                .map(sermon -> SermonResponseDTO.builder()
+                        .sermonId(sermon.getSermonId())
+                        .ownerName(sermon.getOwner().getName())
+                        .sermonDate(sermon.getSermonDate())
+                        .createdAt(sermon.getCreatedAt())
+                        .updatedAt(sermon.getUpdatedAt())
+                        .isPublic(sermon.isPublic())
+                        .worshipType(sermon.getWorshipType())
+                        .mainScripture(sermon.getMainScripture())
+                        .additionalScripture(sermon.getAdditionalScripture())
+                        .sermonTitle(sermon.getSermonTitle())
+                        .summary(sermon.getSummary())
+                        .notes(sermon.getNotes())
+                        .recordInfo(sermon.getRecordInfo())
+                        .fileCode(sermon.getFileCode())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    // Update a sermon
+    public SermonResponseDTO updateSermon(Long sermonId, SermonRequestDTO requestDTO, String loggedInUserId) {
+        // Fetch the sermon to update
+        Sermon sermon = sermonRepository.findById(sermonId)
+                .orElseThrow(() -> new IllegalArgumentException("Sermon not found"));
+
+        // Check ownership
+        if (!sermon.getOwner().getId().toString().equals(loggedInUserId)) {
+            throw new IllegalArgumentException("Unauthorized to update this sermon");
+        }
+
+        // Update fields
+        sermon.setSermonDate(LocalDate.parse(requestDTO.getSermonDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")).atStartOfDay());
+        sermon.setWorshipType(requestDTO.getWorshipType());
+        sermon.setMainScripture(requestDTO.getMainScripture());
+        sermon.setAdditionalScripture(requestDTO.getAdditionalScripture());
+        sermon.setSermonTitle(requestDTO.getSermonTitle());
+        sermon.setSummary(requestDTO.getSummary());
+        sermon.setNotes(requestDTO.getNotes());
+        sermon.setRecordInfo(requestDTO.getRecordInfo());
+        sermon.setPublic(requestDTO.isPublic());
+
+        // Save the updated sermon
+        Sermon updatedSermon = sermonRepository.save(sermon);
+
+        // Build and return the response
+        return SermonResponseDTO.builder()
+                .sermonId(updatedSermon.getSermonId())
+                .ownerName(updatedSermon.getOwner().getName())
+                .sermonDate(updatedSermon.getSermonDate())
+                .createdAt(updatedSermon.getCreatedAt())
+                .updatedAt(updatedSermon.getUpdatedAt())
+                .isPublic(updatedSermon.isPublic())
+                .worshipType(updatedSermon.getWorshipType())
+                .mainScripture(updatedSermon.getMainScripture())
+                .additionalScripture(updatedSermon.getAdditionalScripture())
+                .sermonTitle(updatedSermon.getSermonTitle())
+                .summary(updatedSermon.getSummary())
+                .notes(updatedSermon.getNotes())
+                .recordInfo(updatedSermon.getRecordInfo())
+                .fileCode(updatedSermon.getFileCode())
+                .build();
+    }
+
+
+    // Delete a sermon
+    public void deleteSermon(Long sermonId, String loggedInUserId) {
+        Sermon sermon = sermonRepository.findById(sermonId)
+                .orElseThrow(() -> new IllegalArgumentException("Sermon not found"));
+
+        if (!sermon.getOwner().getId().toString().equals(loggedInUserId)) {
+            throw new IllegalArgumentException("Unauthorized to delete this sermon");
+        }
+
+        sermonRepository.delete(sermon);
+    }
+
 }
