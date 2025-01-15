@@ -1,70 +1,75 @@
 package com.project.bibly_be.sermon.controller;
 
-import com.project.bibly_be.sermon.dto.SermonRequestDto;
-import com.project.bibly_be.sermon.dto.SermonResponseDto;
+import com.project.bibly_be.sermon.dto.SermonRequestDTO;
+import com.project.bibly_be.sermon.dto.SermonResponseDTO;
 import com.project.bibly_be.sermon.service.SermonService;
-import org.springframework.http.ResponseEntity;
+import com.project.bibly_be.user.repository.UserRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
-
 
 @RestController
-@RequestMapping("/api/sermons")
+@RequestMapping("/api/v1/sermons")
+@RequiredArgsConstructor
 public class SermonController {
 
     private final SermonService sermonService;
+    private final UserRepository userRepository;
 
-    public SermonController(SermonService sermonService) {
-        this.sermonService = sermonService;
+
+
+    // GET all public sermons
+    @Operation(summary = "public 되어있는 설교 다 불러오기 룰루 ( SermonPublicList) ")
+    @GetMapping("/publiclist")
+    public List<SermonResponseDTO> getAllPublicSermons() {
+        return sermonService.getAllPublicSermons();
     }
 
-    // Create a new sermon
-    @PostMapping("/sermons")
-    public ResponseEntity<SermonResponseDto> createSermon(
-            @RequestBody SermonRequestDto sermonRequestDto,
-            @RequestHeader("loggedInUserUuid") String loggedInUserUuid) {
-        UUID userUuid = UUID.fromString(loggedInUserUuid);
-        SermonResponseDto response = sermonService.createSermon(sermonRequestDto, userUuid);
-        return ResponseEntity.ok(response);
+    // CREATE new sermon
+    @Operation(summary = "설교 추가 ( AddSermon ) ")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Successfully created new sermon"),
+            @ApiResponse(responseCode = "400", description = "Invalid request payload"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PostMapping
+    public SermonResponseDTO createSermon(@RequestBody SermonRequestDTO requestDTO) {
+        return sermonService.createSermon(requestDTO);
     }
 
-
-
-    // Get all sermons (optionally filtered by public status)
-    @GetMapping
-    public ResponseEntity<List<SermonResponseDto>> getAllSermons(@RequestParam(required = false) Boolean isPublic) {
-        // Assume a method in the service layer to fetch sermons based on the public flag
-        List<SermonResponseDto> sermons = sermonService.getAllSermons(isPublic);
-        return ResponseEntity.ok(sermons);
-    }
-
-    // Get a sermon by ID
-    @GetMapping("/{sermonId}")
-    public ResponseEntity<SermonResponseDto> getSermonById(@PathVariable Long sermonId) {
-        SermonResponseDto response = sermonService.getSermonById(sermonId);
-        return ResponseEntity.ok(response);
-    }
-
-    // Update a sermon
+    // PATCH sermon
+    @Operation(summary = "설교 수정띠 , 로그인된  ID 보내 주시면 비교해서 업뎃해줌( UpdateSermon ) ")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Successfully updated the sermon"),
+            @ApiResponse(responseCode = "400", description = "Invalid request payload"),
+            @ApiResponse(responseCode = "404", description = "Sermon not found"),
+            @ApiResponse(responseCode = "403", description = "Unauthorized to update this sermon"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @PatchMapping("/{sermonId}")
-    public ResponseEntity<SermonResponseDto> patchSermon(
-            @PathVariable Long sermonId,
-            @RequestBody SermonRequestDto sermonRequestDto,
-            @RequestHeader("loggedInUserId") String loggedInUserId) {
-        SermonResponseDto response = sermonService.updateSermon(sermonId, sermonRequestDto, loggedInUserId);
-        return ResponseEntity.ok(response);
+    public SermonResponseDTO updateSermon(@PathVariable Long sermonId,
+                                          @RequestBody SermonRequestDTO requestDTO,
+                                          @RequestParam("userId") String loggedInUserId) {
+        return sermonService.updateSermon(sermonId, requestDTO, loggedInUserId);
     }
 
 
-    // Delete a sermon
+    // DELETE sermon
+    @Operation(summary = "설교 삭제. 낄낄 PATCH 과 같이 로그인된 유저 아디도 보내주셈( DeleteSermon ) ")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Successfully deleted the sermon"),
+            @ApiResponse(responseCode = "404", description = "Sermon not found"),
+            @ApiResponse(responseCode = "403", description = "Unauthorized to delete this sermon"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @DeleteMapping("/{sermonId}")
-    public ResponseEntity<Void> deleteSermon(
-            @PathVariable Long sermonId,
-            @RequestHeader("loggedInUserId") String loggedInUserId
-    ) {
+    public void deleteSermon(@PathVariable Long sermonId,
+                             @RequestParam("userId") String loggedInUserId) {
         sermonService.deleteSermon(sermonId, loggedInUserId);
-        return ResponseEntity.noContent().build();
     }
+
 }
