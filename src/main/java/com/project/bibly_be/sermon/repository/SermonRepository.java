@@ -18,5 +18,4 @@ public interface SermonRepository extends JpaRepository<Sermon, Long> {
     List<Sermon> findByOwner_Id(UUID ownerId);
 
 
-
 }

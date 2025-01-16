@@ -48,7 +48,6 @@ public class SermonController {
     public SermonResponseDTO getSermonDetails(@PathVariable Long sermonId) {
         return sermonService.getSermonDetails(sermonId);
     }
-
     // CREATE new sermon
     @Operation(summary = "설교 추가 ( AddSermon ) ")
     @ApiResponses({
