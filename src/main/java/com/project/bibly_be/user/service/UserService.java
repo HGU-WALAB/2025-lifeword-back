@@ -10,7 +10,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.InputMismatchException;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -92,6 +95,63 @@ public class UserService {
                 .build();
     }
 
+    /**
+     * 모든 사용자 조회 (Admin 전용)
+     */
+    @Transactional(readOnly = true)
+    public List<UserResponseDTO> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(UserResponseDTO::from)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 사용자 삭제 (Admin 전용)
+     */
+    public void deleteUser(UUID userId) {
+        // 존재하는지 체크
+        boolean exists = userRepository.existsById(userId);
+        if (!exists) {
+            throw new IllegalArgumentException("해당 사용자를 찾을 수 없습니다. (id: " + userId + ")");
+        }
+        userRepository.deleteById(userId);
+    }
+
+    /**
+     * 이름으로 사용자 검색 (Admin 전용)
+     */
+    @Transactional(readOnly = true)
+    public List<User> searchUsersByName(String name) {
+        List<User> users = userRepository.findByNameContaining(name);
+        if (users.isEmpty()) {
+            throw new IllegalArgumentException("해당 이름 '" + name + "'을(를) 가진 사용자가 없습니다.");
+        }
+        return users;
+    }
+
+    /**
+     * 직업으로 사용자 검색 (Admin 전용)
+     */
+    @Transactional(readOnly = true)
+    public List<User> searchUsersByJob(String job) {
+        List<User> users = userRepository.findByJob(job);
+        if (users.isEmpty()) {
+            throw new IllegalArgumentException("'" + job + "' 직업을 가진 사용자가 없습니다.");
+        }
+        return users;
+    }
+
+    /**
+     * 교회로 사용자 검색 (Admin 전용)
+     */
+    @Transactional(readOnly = true)
+    public List<User> searchUsersByChurch(String church) {
+        List<User> users = userRepository.findByChurch(church);
+        if (users.isEmpty()) {
+            throw new IllegalArgumentException("'" + church + "' 교회를 가진 사용자가 없습니다.");
+        }
+        return users;
+    }
     // bibly 사용자가 이미 이매을을 쓰는지 여부 확인 (biblycase only: Email)
     @Transactional(readOnly = true)
     public boolean verifyUserByEmail(String email) {

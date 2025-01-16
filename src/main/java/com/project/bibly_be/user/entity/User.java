@@ -1,10 +1,13 @@
 package com.project.bibly_be.user.entity;
 
 import javax.persistence.*;
+
+import com.project.bibly_be.bookmark.entity.Bookmark;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -54,6 +57,10 @@ public class User {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Bookmark> bookmarks;
 
     @Builder
     public User(String oauthProvider, String oauthUid, Boolean isAdmin, String password, String email, String name, String contact,String church, String job, String place) {
