@@ -1,6 +1,5 @@
 package com.project.bibly_be.sermon.service;
 
-import com.project.bibly_be.sermon.dto.ContentDTO;
 import com.project.bibly_be.sermon.dto.SermonRequestDTO;
 import com.project.bibly_be.sermon.dto.SermonResponseDTO;
 import com.project.bibly_be.sermon.entity.Content;
@@ -16,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,14 +24,6 @@ public class SermonService {
     private final SermonRepository sermonRepository;
     private final ContentRepository contentRepository;
     private final UserRepository userRepository;
-    
-    //귀찮은 나를 위해 만든거
-    public List<SermonResponseDTO> createSermons(List<SermonRequestDTO> requestDTOList) {
-        return requestDTOList.stream()
-                .map(this::createSermon)
-                .collect(Collectors.toList());
-    }
-
 
     public SermonResponseDTO createSermon(SermonRequestDTO requestDTO) {
         // FETCH user
@@ -127,72 +117,17 @@ public class SermonService {
                 .collect(Collectors.toList());
     }
 
-    // GET private sermons for logged user
-    public List<SermonResponseDTO> getPrivateSermons(String userId) {
-        UUID userUUID = UUID.fromString(userId); // convert string > UUID
-        return sermonRepository.findByOwner_IdAndIsPublicFalse(userUUID).stream()
-                .map(sermon -> SermonResponseDTO.builder()
-                        .sermonId(sermon.getSermonId())
-                        .ownerName(sermon.getOwner().getName())
-                        .sermonDate(sermon.getSermonDate())
-                        .createdAt(sermon.getCreatedAt())
-                        .updatedAt(sermon.getUpdatedAt())
-                        .isPublic(sermon.isPublic())
-                        .worshipType(sermon.getWorshipType())
-                        .mainScripture(sermon.getMainScripture())
-                        .additionalScripture(sermon.getAdditionalScripture())
-                        .sermonTitle(sermon.getSermonTitle())
-                        .summary(sermon.getSummary())
-                        .notes(sermon.getNotes())
-                        .recordInfo(sermon.getRecordInfo())
-                        .fileCode(sermon.getFileCode())
-                        .build())
-                .collect(Collectors.toList());
-    }
-
-    // GET details of sermon by ID
-    public SermonResponseDTO getSermonDetails(Long sermonId) {
-        Sermon sermon = sermonRepository.findById(sermonId)
-                .orElseThrow(() -> new IllegalArgumentException("Sermon not found"));
-
-        List<ContentDTO> contents = sermon.getContents().stream()
-                .map(content -> ContentDTO.builder()
-                        .contentId(content.getContentId())
-                        .fileCode(content.getFileCode())
-                        .contentText(content.getContentText())
-                        .build())
-                .collect(Collectors.toList());
-
-        return SermonResponseDTO.builder()
-                .sermonId(sermon.getSermonId())
-                .ownerName(sermon.getOwner().getName())
-                .sermonDate(sermon.getSermonDate())
-                .createdAt(sermon.getCreatedAt())
-                .updatedAt(sermon.getUpdatedAt())
-                .isPublic(sermon.isPublic())
-                .worshipType(sermon.getWorshipType())
-                .mainScripture(sermon.getMainScripture())
-                .additionalScripture(sermon.getAdditionalScripture())
-                .sermonTitle(sermon.getSermonTitle())
-                .summary(sermon.getSummary())
-                .notes(sermon.getNotes())
-                .recordInfo(sermon.getRecordInfo())
-                .fileCode(sermon.getFileCode())
-                .contents(contents)
-                .build();
-    }
-
     // PATCH a sermon
     public SermonResponseDTO updateSermon(Long sermonId, SermonRequestDTO requestDTO, String loggedInUserId) {
-        UUID userUUID = UUID.fromString(loggedInUserId);
-
+        // FETCH the sermon to update
         Sermon sermon = sermonRepository.findById(sermonId)
                 .orElseThrow(() -> new IllegalArgumentException("Sermon not found"));
 
-        // 로그인된 유저가 주인장 아니면....
-        if (!sermon.getOwner().getId().equals(userUUID)) {
-            throw new IllegalArgumentException("Unauthorized: Logged-in user is not the owner of this sermon.");
+        // 주인장 확인하기
+        if (!sermon.getOwner().getId().toString().equals(loggedInUserId)) {
+            throw new IllegalArgumentException("Unauthorized to update this sermon");
         }
+
         sermon.setSermonDate(LocalDate.parse(requestDTO.getSermonDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")).atStartOfDay());
         sermon.setWorshipType(requestDTO.getWorshipType());
         sermon.setMainScripture(requestDTO.getMainScripture());
@@ -223,34 +158,6 @@ public class SermonService {
                 .build();
     }
 
-    public ContentDTO updateContent(Long sermonId, String contentText, String loggedInUserId) {
-        UUID userUUID = UUID.fromString(loggedInUserId);
-
-        // FETCH sermon
-        Sermon sermon = sermonRepository.findById(sermonId)
-                .orElseThrow(() -> new IllegalArgumentException("Sermon not found"));
-
-        // CHECK ownership
-        if (!sermon.getOwner().getId().equals(userUUID)) {
-            throw new IllegalArgumentException("Unauthorized: Logged-in user is not the owner of this sermon.");
-        }
-
-        Content content = sermon.getContents().isEmpty() ? null : sermon.getContents().get(0);
-        if (content == null) {
-            content = new Content();
-            content.setSermon(sermon);
-            content.setFileCode(sermon.getFileCode());
-        }
-
-        content.setContentText(contentText);
-        Content updatedContent = contentRepository.save(content);
-
-        return ContentDTO.builder()
-                .contentId(updatedContent.getContentId())
-                .fileCode(updatedContent.getFileCode())
-                .contentText(updatedContent.getContentText())
-                .build();
-    }
 
     // DELETE sermon
     public void deleteSermon(Long sermonId, String loggedInUserId) {

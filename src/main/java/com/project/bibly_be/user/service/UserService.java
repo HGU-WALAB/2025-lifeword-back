@@ -69,27 +69,28 @@ public class UserService {
     // 사용자 존재 여부 확인 (kakao/google case only)
     @Transactional(readOnly = true)
     public UserResponseDTO.VerifyResponse verifyUserSns(String oauthUid) {
-        User user = userRepository.findByOauthUid(oauthUid).orElse(null);
-                //.orElseThrow(()->new UsernameNotFoundException("해당 사용자를 찾을 수 없음요"));
+        User user = userRepository.findByOauthUid(oauthUid)
+                .orElseThrow(()->new UsernameNotFoundException("해당 사용자를 찾을 수 없음요"));
 
         return UserResponseDTO.VerifyResponse.builder()
                 .exists(user != null) // exists(true)
                 .userId(user != null ? user.getId() : null)
-                .job(  user!=null ?  user.getJob() : null)
-                .isAdmin(user != null ? user.getIsAdmin(): false)
+                .job(user.getJob())
+                .isAdmin(user.getIsAdmin())
                 .build();
     }
 
     // 사용자 존재 여부 확인 (biblycase only)
     @Transactional(readOnly = true)
     public UserResponseDTO.VerifyResponse verifyUserBibly(String email, String password) {
-        User user = userRepository.findUsersByEmailAndOauthProvider(email,"bibly")//.orElse(null);
+        User user = userRepository.findUsersByEmailAndOauthProvider(email,"bibly")
+        //User user = userRepository.findByEmail(email)
                 .orElseThrow(()->new UsernameNotFoundException("해당 사용자를 찾을 수 없음요"));
         if(!user.getPassword().equals(password)) throw new InputMismatchException("비밀 번호 틀림요"); // security 문제 있을까?
         return UserResponseDTO.VerifyResponse.builder()
                 .exists(true) // exists(true)
-                .userId( user.getId() )//.userId(user != null ? user.getId() : null)
-                .job(  user.getJob())
+                .userId(user.getId())//.userId(user != null ? user.getId() : null)
+                .job(user.getJob())
                 .isAdmin(user.getIsAdmin())
                 .build();
     }
