@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -128,7 +129,8 @@ public class SermonService {
 
     // GET private sermons for logged user
     public List<SermonResponseDTO> getPrivateSermons(String userId) {
-        return sermonRepository.findByOwner_IdAndIsPublicFalse(userId).stream()
+        UUID userUUID = UUID.fromString(userId); // convert string > UUID
+        return sermonRepository.findByOwner_IdAndIsPublicFalse(userUUID).stream()
                 .map(sermon -> SermonResponseDTO.builder()
                         .sermonId(sermon.getSermonId())
                         .ownerName(sermon.getOwner().getName())
@@ -182,15 +184,15 @@ public class SermonService {
 
     // PATCH a sermon
     public SermonResponseDTO updateSermon(Long sermonId, SermonRequestDTO requestDTO, String loggedInUserId) {
-        // FETCH the sermon to update
+        UUID userUUID = UUID.fromString(loggedInUserId);
+
         Sermon sermon = sermonRepository.findById(sermonId)
                 .orElseThrow(() -> new IllegalArgumentException("Sermon not found"));
 
-        // 주인장 확인하기
-        if (!sermon.getOwner().getId().toString().equals(loggedInUserId)) {
-            throw new IllegalArgumentException("Unauthorized to update this sermon");
+        // 로그인된 유저가 주인장 아니면....
+        if (!sermon.getOwner().getId().equals(userUUID)) {
+            throw new IllegalArgumentException("Unauthorized: Logged-in user is not the owner of this sermon.");
         }
-
         sermon.setSermonDate(LocalDate.parse(requestDTO.getSermonDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")).atStartOfDay());
         sermon.setWorshipType(requestDTO.getWorshipType());
         sermon.setMainScripture(requestDTO.getMainScripture());
