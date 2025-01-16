@@ -5,18 +5,19 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.UUID;
 
 @Repository
 public interface SermonRepository extends JpaRepository<Sermon, Long> {
 
     List<Sermon> findByIsPublicTrue();
-
     boolean existsByFileCode(String fileCode);
 
+<<<<<<< HEAD
     List<Sermon> findByOwner_IdAndIsPublicFalse(UUID ownerId);
 
     List<Sermon> findByOwner_Id(UUID ownerId);
 
+=======
+>>>>>>> 066abe223372d9dd3cd4c307157024999760d034
 
 }
