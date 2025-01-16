@@ -35,7 +35,7 @@ public class UserController {
         } catch (IllegalArgumentException e) {
             return ApiResponseDTO.error(e.getMessage(), HttpStatus.BAD_REQUEST.value());
         } catch (Exception e) {
-            return ApiResponseDTO.error("서버 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            return ApiResponseDTO.error(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
     }
 
@@ -55,7 +55,7 @@ public class UserController {
     {
         try {
             UserResponseDTO.VerifyResponse response = userService.verifyUserSns(oauthUid);
-            return ApiResponseDTO.success("사용자 확인 완료", response);
+            return ApiResponseDTO.success("사용자 검색 완료", response);
         } catch (UsernameNotFoundException e) {
             return ApiResponseDTO.error(e.getMessage(), HttpStatus.NOT_FOUND.value());
         } catch (Exception e) {
@@ -77,7 +77,7 @@ public class UserController {
     {
         try {
             UserResponseDTO.VerifyResponse response = userService.verifyUserBibly(email, password);
-            return ApiResponseDTO.success("사용자 확인 완료", response);
+            return ApiResponseDTO.success("사용자 검색 완료", response);
         } catch (UsernameNotFoundException e) {
             return ApiResponseDTO.error(e.getMessage(), HttpStatus.NOT_FOUND.value());
         } catch (Exception e) {
