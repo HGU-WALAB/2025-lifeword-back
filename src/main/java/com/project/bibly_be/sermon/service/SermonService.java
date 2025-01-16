@@ -25,6 +25,14 @@ public class SermonService {
     private final SermonRepository sermonRepository;
     private final ContentRepository contentRepository;
     private final UserRepository userRepository;
+    
+    //귀찮은 나를 위해 만든거
+    public List<SermonResponseDTO> createSermons(List<SermonRequestDTO> requestDTOList) {
+        return requestDTOList.stream()
+                .map(this::createSermon)
+                .collect(Collectors.toList());
+    }
+
 
     public SermonResponseDTO createSermon(SermonRequestDTO requestDTO) {
         // FETCH user

@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -53,6 +55,15 @@ public class SermonController {
     public SermonResponseDTO createSermon(@RequestBody SermonRequestDTO requestDTO) {
         return sermonService.createSermon(requestDTO);
     }
+
+
+    @Operation(summary = "설교 ㅋㅋㅋ 한번에 많이 추가하는거 만듬.. 그냥 .. 하나씩 추가하기 귀찮아서요 >< 히히힣ㅎㅎ ")
+    @PostMapping("/bulk")
+    public ResponseEntity<?> createSermons(@RequestBody List<SermonRequestDTO> sermonRequestDTOList) {
+        List<SermonResponseDTO> responseList = sermonService.createSermons(sermonRequestDTOList);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseList);
+    }
+
 
     // PATCH sermon
     @Operation(summary = "설교 수정띠 , 로그인된  ID 보내 주시면 비교해서 업뎃해줌( UpdateSermon ) ")
