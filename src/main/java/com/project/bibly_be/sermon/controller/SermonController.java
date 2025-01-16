@@ -1,5 +1,6 @@
 package com.project.bibly_be.sermon.controller;
 
+import com.project.bibly_be.sermon.dto.ContentDTO;
 import com.project.bibly_be.sermon.dto.SermonRequestDTO;
 import com.project.bibly_be.sermon.dto.SermonResponseDTO;
 import com.project.bibly_be.sermon.service.SermonService;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/sermons")
+@RequestMapping("/api/v1/sermon")
 @RequiredArgsConstructor
 public class SermonController {
 
@@ -38,7 +39,8 @@ public class SermonController {
         return sermonService.getPrivateSermons(userId);
     }
     // Get details of a specific sermon
-    @GetMapping("/{sermonId}")
+    @Operation(summary = " 선택한 설교 details 페이지 contents 도 보내드림 ( SermonDetails )")
+    @GetMapping("/{sermonId}/details")
     public SermonResponseDTO getSermonDetails(@PathVariable Long sermonId) {
         return sermonService.getSermonDetails(sermonId);
     }
@@ -79,6 +81,15 @@ public class SermonController {
                                           @RequestParam("userId") String loggedInUserId) {
         return sermonService.updateSermon(sermonId, requestDTO, loggedInUserId);
     }
+
+    @Operation(summary = "설교 본문 수정띠 ( UpdateContent ) ", description = "혅웅 오빠 이거 업뎃 할때 quotation marks 까지 저장된다면 말해주세용 그거 고쳐줘야흠")
+    @PatchMapping("/{sermonId}/content")
+    public ContentDTO updateContent(@PathVariable Long sermonId,
+                                    @RequestParam("userId") String loggedInUserId,
+                                    @RequestBody String contentText) {
+        return sermonService.updateContent(sermonId, contentText, loggedInUserId);
+    }
+
 
 
     // DELETE sermon

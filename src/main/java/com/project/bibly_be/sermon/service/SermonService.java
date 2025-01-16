@@ -226,24 +226,22 @@ public class SermonService {
     public ContentDTO updateContent(Long sermonId, String contentText, String loggedInUserId) {
         UUID userUUID = UUID.fromString(loggedInUserId);
 
-        // Fetch the sermon
+        // FETCH sermon
         Sermon sermon = sermonRepository.findById(sermonId)
                 .orElseThrow(() -> new IllegalArgumentException("Sermon not found"));
 
-        // Check ownership
+        // CHECK ownership
         if (!sermon.getOwner().getId().equals(userUUID)) {
             throw new IllegalArgumentException("Unauthorized: Logged-in user is not the owner of this sermon.");
         }
 
-        // Fetch or create content
         Content content = sermon.getContents().isEmpty() ? null : sermon.getContents().get(0);
         if (content == null) {
             content = new Content();
             content.setSermon(sermon);
-            content.setFileCode(sermon.getFileCode()); // Assign sermon fileCode
+            content.setFileCode(sermon.getFileCode());
         }
 
-        // Update content text
         content.setContentText(contentText);
         Content updatedContent = contentRepository.save(content);
 
@@ -253,10 +251,6 @@ public class SermonService {
                 .contentText(updatedContent.getContentText())
                 .build();
     }
-
-
-
-
 
     // DELETE sermon
     public void deleteSermon(Long sermonId, String loggedInUserId) {
