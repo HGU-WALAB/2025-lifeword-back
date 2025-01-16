@@ -40,6 +40,7 @@ public class UserService {
 
         return UserResponseDTO.VerifyResponse.builder()
                 .exists(user != null)
+                .isAdmin(user != null)
                 .userId(user != null ? user.getId() : null)
                 .build();
     }
