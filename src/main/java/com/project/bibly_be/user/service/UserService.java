@@ -72,6 +72,8 @@ public class UserService {
         return UserResponseDTO.VerifyResponse.builder()
                 .exists(user != null) // exists(true)
                 .userId(user != null ? user.getId() : null)
+                .job(user.getJob())
+                .isAdmin(user.getIsAdmin())
                 .build();
     }
 
@@ -85,6 +87,8 @@ public class UserService {
         return UserResponseDTO.VerifyResponse.builder()
                 .exists(true) // exists(true)
                 .userId(user.getId())//.userId(user != null ? user.getId() : null)
+                .job(user.getJob())
+                .isAdmin(user.getIsAdmin())
                 .build();
     }
 

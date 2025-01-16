@@ -42,6 +42,8 @@ public class UserResponseDTO {
     @Builder
     public static class VerifyResponse {
         private boolean exists;
+        private boolean isAdmin;
+        private String job;
         private UUID userId;
     }
 }
