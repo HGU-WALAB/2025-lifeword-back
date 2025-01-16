@@ -35,7 +35,7 @@ public class UserController {
         } catch (IllegalArgumentException e) {
             return ApiResponseDTO.error(e.getMessage(), HttpStatus.BAD_REQUEST.value());
         } catch (Exception e) {
-            return ApiResponseDTO.error(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
+            return ApiResponseDTO.error("서버 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
     }
 
