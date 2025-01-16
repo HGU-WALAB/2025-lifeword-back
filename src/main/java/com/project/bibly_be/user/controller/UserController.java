@@ -53,14 +53,16 @@ public class UserController {
             @RequestParam("oauthUid") String oauthUid
             )
     {
-        try {
-            UserResponseDTO.VerifyResponse response = userService.verifyUserSns(oauthUid);
-            return ApiResponseDTO.success("사용자 검색 완료", response);
-        } catch (UsernameNotFoundException e) {
-            return ApiResponseDTO.error(e.getMessage(), HttpStatus.NOT_FOUND.value());
-        } catch (Exception e) {
-            return ApiResponseDTO.error(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
-        }
+        UserResponseDTO.VerifyResponse response = userService.verifyUserSns(oauthUid); // case of int val only come // String.valueOf()
+        return ApiResponseDTO.success("사용자 검색 완료", response);
+//        try {
+//            UserResponseDTO.VerifyResponse response = userService.verifyUserSns(oauthUid);
+//            return ApiResponseDTO.success("사용자 검색 완료", response);
+//        } catch (UsernameNotFoundException e) {
+//            return ApiResponseDTO.error(e.getMessage(), HttpStatus.NOT_FOUND.value()); // string msg(verifyUserSns->e msg), int status = 404
+//        } catch (Exception e) {
+//            return ApiResponseDTO.error(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value()); // string msg , int status = 500
+//        }
     }
 
 

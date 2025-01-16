@@ -66,14 +66,13 @@ public class UserService {
     // 사용자 존재 여부 확인 (kakao/google case only)
     @Transactional(readOnly = true)
     public UserResponseDTO.VerifyResponse verifyUserSns(String oauthUid) {
-        User user = userRepository.findByOauthUid(oauthUid).orElse(null);
-                //.orElseThrow(()->new UsernameNotFoundException("해당 사용자를 찾을 수 없음요"));
+        User user = userRepository.findByOauthUid(oauthUid).orElse(null); //String.valueOf()
 
         return UserResponseDTO.VerifyResponse.builder()
-                .exists(user != null) // exists(true)
+                .exists(user != null)
                 .userId(user != null ? user.getId() : null)
-                .job(  user!=null ?  user.getJob() : null)
-                .isAdmin(user != null ? user.getIsAdmin(): false)
+                .job(user != null ? user.getJob() : null)
+                .isAdmin(user != null && user.getIsAdmin())
                 .build();
     }
 
