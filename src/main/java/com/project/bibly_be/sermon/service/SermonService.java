@@ -1,5 +1,6 @@
 package com.project.bibly_be.sermon.service;
 
+import com.project.bibly_be.sermon.dto.ContentDTO;
 import com.project.bibly_be.sermon.dto.SermonRequestDTO;
 import com.project.bibly_be.sermon.dto.SermonResponseDTO;
 import com.project.bibly_be.sermon.entity.Content;
@@ -115,6 +116,60 @@ public class SermonService {
                         .fileCode(sermon.getFileCode())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    // GET private sermons for logged user
+    public List<SermonResponseDTO> getPrivateSermons(String userId) {
+        return sermonRepository.findByOwner_IdAndIsPublicFalse(userId).stream()
+                .map(sermon -> SermonResponseDTO.builder()
+                        .sermonId(sermon.getSermonId())
+                        .ownerName(sermon.getOwner().getName())
+                        .sermonDate(sermon.getSermonDate())
+                        .createdAt(sermon.getCreatedAt())
+                        .updatedAt(sermon.getUpdatedAt())
+                        .isPublic(sermon.isPublic())
+                        .worshipType(sermon.getWorshipType())
+                        .mainScripture(sermon.getMainScripture())
+                        .additionalScripture(sermon.getAdditionalScripture())
+                        .sermonTitle(sermon.getSermonTitle())
+                        .summary(sermon.getSummary())
+                        .notes(sermon.getNotes())
+                        .recordInfo(sermon.getRecordInfo())
+                        .fileCode(sermon.getFileCode())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    // GET details of sermon by ID
+    public SermonResponseDTO getSermonDetails(Long sermonId) {
+        Sermon sermon = sermonRepository.findById(sermonId)
+                .orElseThrow(() -> new IllegalArgumentException("Sermon not found"));
+
+        List<ContentDTO> contents = sermon.getContents().stream()
+                .map(content -> ContentDTO.builder()
+                        .contentId(content.getContentId())
+                        .fileCode(content.getFileCode())
+                        .contentText(content.getContentText())
+                        .build())
+                .collect(Collectors.toList());
+
+        return SermonResponseDTO.builder()
+                .sermonId(sermon.getSermonId())
+                .ownerName(sermon.getOwner().getName())
+                .sermonDate(sermon.getSermonDate())
+                .createdAt(sermon.getCreatedAt())
+                .updatedAt(sermon.getUpdatedAt())
+                .isPublic(sermon.isPublic())
+                .worshipType(sermon.getWorshipType())
+                .mainScripture(sermon.getMainScripture())
+                .additionalScripture(sermon.getAdditionalScripture())
+                .sermonTitle(sermon.getSermonTitle())
+                .summary(sermon.getSummary())
+                .notes(sermon.getNotes())
+                .recordInfo(sermon.getRecordInfo())
+                .fileCode(sermon.getFileCode())
+                .contents(contents)
+                .build();
     }
 
     // PATCH a sermon

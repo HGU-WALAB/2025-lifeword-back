@@ -11,6 +11,7 @@ public interface SermonRepository extends JpaRepository<Sermon, Long> {
 
     List<Sermon> findByIsPublicTrue();
     boolean existsByFileCode(String fileCode);
+    List<Sermon> findByOwner_IdAndIsPublicFalse(String ownerId);
 
 
 }

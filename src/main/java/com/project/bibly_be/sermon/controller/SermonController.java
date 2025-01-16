@@ -29,6 +29,19 @@ public class SermonController {
         return sermonService.getAllPublicSermons();
     }
 
+    // Get private sermons of the logged-in user
+    @Operation(summary = " 로그인된 유저 private 되어있는 설교 다 불러오기 룰루 ( SermonPrivateList )", description = " 유저아이디 보내주면 리스트 불러드를게여~")
+    @GetMapping("/private")
+    public List<SermonResponseDTO> getPrivateSermons(@RequestParam("userId") String userId) {
+        return sermonService.getPrivateSermons(userId);
+    }
+
+    // Get details of a specific sermon
+    @GetMapping("/{sermonId}")
+    public SermonResponseDTO getSermonDetails(@PathVariable Long sermonId) {
+        return sermonService.getSermonDetails(sermonId);
+    }
+
     // CREATE new sermon
     @Operation(summary = "설교 추가 ( AddSermon ) ")
     @ApiResponses({
