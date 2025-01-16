@@ -26,14 +26,6 @@ public class SermonService {
     private final SermonRepository sermonRepository;
     private final ContentRepository contentRepository;
     private final UserRepository userRepository;
-    
-    //귀찮은 나를 위해 만든거
-    public List<SermonResponseDTO> createSermons(List<SermonRequestDTO> requestDTOList) {
-        return requestDTOList.stream()
-                .map(this::createSermon)
-                .collect(Collectors.toList());
-    }
-
 
     public SermonResponseDTO createSermon(SermonRequestDTO requestDTO) {
         // FETCH user
@@ -217,15 +209,15 @@ public class SermonService {
 
     // PATCH a sermon
     public SermonResponseDTO updateSermon(Long sermonId, SermonRequestDTO requestDTO, String loggedInUserId) {
-        UUID userUUID = UUID.fromString(loggedInUserId);
-
+        // FETCH the sermon to update
         Sermon sermon = sermonRepository.findById(sermonId)
                 .orElseThrow(() -> new IllegalArgumentException("Sermon not found"));
 
-        // 로그인된 유저가 주인장 아니면....
-        if (!sermon.getOwner().getId().equals(userUUID)) {
-            throw new IllegalArgumentException("Unauthorized: Logged-in user is not the owner of this sermon.");
+        // 주인장 확인하기
+        if (!sermon.getOwner().getId().toString().equals(loggedInUserId)) {
+            throw new IllegalArgumentException("Unauthorized to update this sermon");
         }
+
         sermon.setSermonDate(LocalDate.parse(requestDTO.getSermonDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")).atStartOfDay());
         sermon.setWorshipType(requestDTO.getWorshipType());
         sermon.setMainScripture(requestDTO.getMainScripture());
@@ -256,34 +248,6 @@ public class SermonService {
                 .build();
     }
 
-    public ContentDTO updateContent(Long sermonId, String contentText, String loggedInUserId) {
-        UUID userUUID = UUID.fromString(loggedInUserId);
-
-        // FETCH sermon
-        Sermon sermon = sermonRepository.findById(sermonId)
-                .orElseThrow(() -> new IllegalArgumentException("Sermon not found"));
-
-        // CHECK ownership
-        if (!sermon.getOwner().getId().equals(userUUID)) {
-            throw new IllegalArgumentException("Unauthorized: Logged-in user is not the owner of this sermon.");
-        }
-
-        Content content = sermon.getContents().isEmpty() ? null : sermon.getContents().get(0);
-        if (content == null) {
-            content = new Content();
-            content.setSermon(sermon);
-            content.setFileCode(sermon.getFileCode());
-        }
-
-        content.setContentText(contentText);
-        Content updatedContent = contentRepository.save(content);
-
-        return ContentDTO.builder()
-                .contentId(updatedContent.getContentId())
-                .fileCode(updatedContent.getFileCode())
-                .contentText(updatedContent.getContentText())
-                .build();
-    }
 
     // DELETE sermon
     public void deleteSermon(Long sermonId, String loggedInUserId) {
