@@ -16,5 +16,7 @@ public interface SermonRepository extends JpaRepository<Sermon, Long> {
 
     List<Sermon> findByOwner_IdAndIsPublicFalse(UUID ownerId);
 
+    List<Sermon> findByOwner_Id(UUID ownerId);
+
 
 }
