@@ -54,7 +54,7 @@ public class UserController {
             )
     {
         try {
-            UserResponseDTO.VerifyResponse response = userService.verifyUser(oauthUid);
+            UserResponseDTO.VerifyResponse response = userService.verifyUserSns(oauthUid);
             return ApiResponseDTO.success("사용자 확인 완료", response);
         } catch (UsernameNotFoundException e) {
             return ApiResponseDTO.error(e.getMessage(), HttpStatus.NOT_FOUND.value());
@@ -76,7 +76,7 @@ public class UserController {
     )
     {
         try {
-            UserResponseDTO.VerifyResponse response = userService.verifyUser(email, password);
+            UserResponseDTO.VerifyResponse response = userService.verifyUserBibly(email, password);
             return ApiResponseDTO.success("사용자 확인 완료", response);
         } catch (UsernameNotFoundException e) {
             return ApiResponseDTO.error(e.getMessage(), HttpStatus.NOT_FOUND.value());
