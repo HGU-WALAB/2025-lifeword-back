@@ -65,7 +65,7 @@ public class UserService {
 
     // 사용자 존재 여부 확인 (kakao/google case only)
     @Transactional(readOnly = true)
-    public UserResponseDTO.VerifyResponse verifyUser(String oauthUid) {
+    public UserResponseDTO.VerifyResponse verifyUserSns(String oauthUid) {
         User user = userRepository.findByOauthUid(oauthUid)
                 .orElseThrow(()->new UsernameNotFoundException("해당 사용자를 찾을 수 없음요"));
 
@@ -77,7 +77,7 @@ public class UserService {
 
     // 사용자 존재 여부 확인 (biblycase only)
     @Transactional(readOnly = true)
-    public UserResponseDTO.VerifyResponse verifyUser(String email, String password) {
+    public UserResponseDTO.VerifyResponse verifyUserBibly(String email, String password) {
         User user = userRepository.findUsersByEmailAndOauthProvider(email,"bibly")
         //User user = userRepository.findByEmail(email)
                 .orElseThrow(()->new UsernameNotFoundException("해당 사용자를 찾을 수 없음요"));
