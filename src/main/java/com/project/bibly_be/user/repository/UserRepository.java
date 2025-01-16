@@ -7,5 +7,8 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
 
-    Optional<User> findByOauthUid(String oauthUid);
+    Optional<User> findByOauthUid(String oauthUid); // google kakao case
+    Optional<User> findByEmail(String email);
+
+    Optional<User> findUsersByEmailAndOauthProvider(String email, String oauthProvider);
 }
