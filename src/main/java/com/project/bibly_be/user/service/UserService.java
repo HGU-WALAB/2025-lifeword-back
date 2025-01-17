@@ -134,7 +134,7 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public List<User> searchUsersByJob(String job) {
-        List<User> users = userRepository.findByJob(job);
+        List<User> users = userRepository.findByJobContaining(job);
         if (users.isEmpty()) {
             throw new IllegalArgumentException("'" + job + "' 직업을 가진 사용자가 없습니다.");
         }
@@ -146,7 +146,7 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public List<User> searchUsersByChurch(String church) {
-        List<User> users = userRepository.findByChurch(church);
+        List<User> users = userRepository.findByChurchContaining(church);
         if (users.isEmpty()) {
             throw new IllegalArgumentException("'" + church + "' 교회를 가진 사용자가 없습니다.");
         }
@@ -158,11 +158,25 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public List<User> searchUsersByEmail(String email) {
-        List<User> users = userRepository.findByEmail(email);
+        List<User> users = userRepository.findByEmailContaining(email);
         if (users.isEmpty()) {
             throw new IllegalArgumentException("해당 이메일 '" + email + "'을 가진 사용자가 없습니다.");
         }
         return users;
+    }
+    public UserResponseDTO updateUser(UUID userId, UserRequestDTO requestDTO) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        user.setEmail(requestDTO.getEmail());
+        user.setName(requestDTO.getName());
+        user.setContact(requestDTO.getContact());
+        user.setChurch(requestDTO.getChurch());
+        user.setJob(requestDTO.getJob());
+        user.setPlace(requestDTO.getPlace());
+
+        User updatedUser = userRepository.save(user);
+        return UserResponseDTO.from(updatedUser);
     }
 
     // bibly 사용자가 이미 이매을을 쓰는지 여부 확인 (biblycase only: Email)
