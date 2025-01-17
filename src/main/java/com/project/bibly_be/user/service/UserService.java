@@ -60,6 +60,7 @@ public class UserService {
                 .church(request.getChurch())
                 .job(request.getJob())
                 .place(request.getPlace())
+                .isAdmin(false) // default is false -> no admin authority given
                 .build();
 
         User savedUser = userRepository.save(user);
