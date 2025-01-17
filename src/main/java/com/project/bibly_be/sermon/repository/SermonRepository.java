@@ -11,10 +11,11 @@ import java.util.UUID;
 public interface SermonRepository extends JpaRepository<Sermon, Long> {
 
     List<Sermon> findByIsPublicTrue();
-
     boolean existsByFileCode(String fileCode);
 
     List<Sermon> findByOwner_IdAndIsPublicFalse(UUID ownerId);
+
+    List<Sermon> findByOwner_Id(UUID ownerId);
 
 
 }
