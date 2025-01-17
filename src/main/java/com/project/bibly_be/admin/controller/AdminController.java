@@ -1,8 +1,9 @@
 package com.project.bibly_be.admin.controller;
 
-import com.project.bibly_be.user.dto.UserResponseDTO;
 import com.project.bibly_be.user.entity.User;
+import com.project.bibly_be.user.dto.UserResponseDTO;
 import com.project.bibly_be.user.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,7 @@ public class AdminController {
     /**
      * 모든 사용자 조회
      */
+    @Operation(summary = "모든 유저 다 불러오기")
     @GetMapping
     public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
         List<UserResponseDTO> users = userService.getAllUsers();
@@ -36,29 +38,37 @@ public class AdminController {
     }
 
     /**
-     * 사용자 이름으로 검색
+     * 하나의 엔드포인트로 이름/직업/교회 검색
+     * 예) /search?type=name&value=홍길동
+     *     /search?type=job&value=teacher
+     *     /search?type=church&value=seoul
      */
-    @GetMapping("/search/by-name")
-    public ResponseEntity<List<User>> searchUsersByName(@RequestParam String name) {
-        List<User> users = userService.searchUsersByName(name);
-        return ResponseEntity.ok(users);
-    }
+    @Operation(summary = "type 파라미터 종류 : name, job, church, email")
 
-    /**
-     * 사용자 직업으로 검색
-     */
-    @GetMapping("/search/by-job")
-    public ResponseEntity<List<User>> searchUsersByJob(@RequestParam String job) {
-        List<User> users = userService.searchUsersByJob(job);
-        return ResponseEntity.ok(users);
-    }
+    @GetMapping("/search")
+    public ResponseEntity<List<User>> searchUsers(
+            @RequestParam("type") String type,
+            @RequestParam("value") String value
+    ) {
+        List<User> users;
 
-    /**
-     * 사용자 교회로 검색
-     */
-    @GetMapping("/search/by-church")
-    public ResponseEntity<List<User>> searchUsersByChurch(@RequestParam String church) {
-        List<User> users = userService.searchUsersByChurch(church);
+        switch (type.toLowerCase()) {
+            case "name":
+                users = userService.searchUsersByName(value);
+                break;
+            case "job":
+                users = userService.searchUsersByJob(value);
+                break;
+            case "church":
+                users = userService.searchUsersByChurch(value);
+                break;
+            case "email" :
+                users = userService.searchUsersByEmail(value);
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid search type: " + type);
+        }
+
         return ResponseEntity.ok(users);
     }
 }
