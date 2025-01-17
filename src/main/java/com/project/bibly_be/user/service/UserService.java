@@ -85,7 +85,6 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserResponseDTO.VerifyResponse verifyUserBibly(String email, String password) {
         User user = userRepository.findUsersByEmailAndOauthProvider(email,"bibly")
-        //User user = userRepository.findByEmail(email)
                 .orElseThrow(()->new UsernameNotFoundException("해당 사용자를 찾을 수 없음요"));
         if(!user.getPassword().equals(password)) throw new InputMismatchException("비밀 번호 틀림요"); // security 문제 있을까?
         return UserResponseDTO.VerifyResponse.builder()
@@ -135,7 +134,7 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public List<User> searchUsersByJob(String job) {
-        List<User> users = userRepository.findByJob(job);
+        List<User> users = userRepository.findByJobContaining(job);
         if (users.isEmpty()) {
             throw new IllegalArgumentException("'" + job + "' 직업을 가진 사용자가 없습니다.");
         }
@@ -147,12 +146,39 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public List<User> searchUsersByChurch(String church) {
-        List<User> users = userRepository.findByChurch(church);
+        List<User> users = userRepository.findByChurchContaining(church);
         if (users.isEmpty()) {
             throw new IllegalArgumentException("'" + church + "' 교회를 가진 사용자가 없습니다.");
         }
         return users;
     }
+
+    /**
+     * 이메일로 사용자 검색 (Admin 전용)
+     */
+    @Transactional(readOnly = true)
+    public List<User> searchUsersByEmail(String email) {
+        List<User> users = userRepository.findByEmailContaining(email);
+        if (users.isEmpty()) {
+            throw new IllegalArgumentException("해당 이메일 '" + email + "'을 가진 사용자가 없습니다.");
+        }
+        return users;
+    }
+    public UserResponseDTO updateUser(UUID userId, UserRequestDTO requestDTO) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        user.setEmail(requestDTO.getEmail());
+        user.setName(requestDTO.getName());
+        user.setContact(requestDTO.getContact());
+        user.setChurch(requestDTO.getChurch());
+        user.setJob(requestDTO.getJob());
+        user.setPlace(requestDTO.getPlace());
+
+        User updatedUser = userRepository.save(user);
+        return UserResponseDTO.from(updatedUser);
+    }
+
     // bibly 사용자가 이미 이매을을 쓰는지 여부 확인 (biblycase only: Email)
     @Transactional(readOnly = true)
     public boolean verifyUserByEmail(String email) {
