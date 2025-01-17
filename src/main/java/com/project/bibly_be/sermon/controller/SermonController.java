@@ -10,7 +10,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/sermons")
@@ -29,22 +31,27 @@ public class SermonController {
         return sermonService.getAllPublicSermons();
     }
 
-    @Operation(summary = "로그인된 유저 ispublic 상관 없이 다 불러오기~ ( SermonUsersList ) ")
+    @Operation(summary = "유저별 sermons list all, private, public! ( UserSermonList ) ")
     @GetMapping("/user/list")
-    public List<SermonResponseDTO> getAllSermonsByUser(@RequestParam("userId") String userId) {
-        return sermonService.getAllSermonsByUser(userId);
+    public List<SermonResponseDTO> getUserSermons(
+            @RequestParam("userId") String userId,
+            @RequestParam("option") String option) {
+        switch (option.toLowerCase()) {
+            case "all":
+                return sermonService.getAllSermonsByUser(userId);
+            case "private":
+                return sermonService.getPrivateSermons(userId);
+            case "public":
+                return sermonService.getPublicSermonsByUser(userId);
+            default:
+                throw new IllegalArgumentException("Invalid option. Valid options are: all, private, public.");
+        }
     }
 
 
-    // GET private sermons of the logged-in user
-    @Operation(summary = " 로그인된 유저 private 되어있는 설교 다 불러오기 룰루 ( SermonPrivateList )", description = " 유저아이디 보내주면 리스트 불러드를게여~")
-    @GetMapping("/user/privatelist")
-    public List<SermonResponseDTO> getPrivateSermons(@RequestParam("userId") String userId) {
-        return sermonService.getPrivateSermons(userId);
-    }
     // Get details of a specific sermon
     @Operation(summary = " 선택한 설교 details 페이지 contents 도 보내드림 ( SermonDetails )")
-    @GetMapping("/{sermonId}/details")
+    @GetMapping("/details/{sermonId}")
     public SermonResponseDTO getSermonDetails(@PathVariable Long sermonId) {
         return sermonService.getSermonDetails(sermonId);
     }

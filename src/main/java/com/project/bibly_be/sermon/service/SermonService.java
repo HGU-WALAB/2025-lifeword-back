@@ -120,59 +120,27 @@ public class SermonService {
                 .collect(Collectors.toList());
     }
 
-    //GET all sermons for logged user
+    // GET all sermons by USER
     public List<SermonResponseDTO> getAllSermonsByUser(String userId) {
-        UUID userUUID = UUID.fromString(userId); // Convert String to UUID
-
-        List<Sermon> sermons = sermonRepository.findByOwner_Id(userUUID);
-
-        return sermons.stream()
-                .map(sermon -> SermonResponseDTO.builder()
-                        .sermonId(sermon.getSermonId())
-                        .ownerName(sermon.getOwner().getName())
-                        .sermonDate(sermon.getSermonDate())
-                        .createdAt(sermon.getCreatedAt())
-                        .updatedAt(sermon.getUpdatedAt())
-                        .isPublic(sermon.isPublic())
-                        .worshipType(sermon.getWorshipType())
-                        .mainScripture(sermon.getMainScripture())
-                        .additionalScripture(sermon.getAdditionalScripture())
-                        .sermonTitle(sermon.getSermonTitle())
-                        .summary(sermon.getSummary())
-                        .notes(sermon.getNotes())
-                        .recordInfo(sermon.getRecordInfo())
-                        .fileCode(sermon.getFileCode())
-                        .contents(sermon.getContents().stream()
-                                .map(content -> ContentDTO.builder()
-                                        .contentId(content.getContentId())
-                                        .fileCode(content.getFileCode())
-                                        .contentText(content.getContentText())
-                                        .build())
-                                .collect(Collectors.toList()))
-                        .build())
+        UUID userUUID = UUID.fromString(userId);
+        return sermonRepository.findByOwner_Id(userUUID).stream()
+                .map(this::mapToSermonResponseDTO)
                 .collect(Collectors.toList());
     }
 
-    // GET private sermons for logged user
+    // GET private sermons by USER
     public List<SermonResponseDTO> getPrivateSermons(String userId) {
-        UUID userUUID = UUID.fromString(userId); // convert string > UUID
+        UUID userUUID = UUID.fromString(userId);
         return sermonRepository.findByOwner_IdAndIsPublicFalse(userUUID).stream()
-                .map(sermon -> SermonResponseDTO.builder()
-                        .sermonId(sermon.getSermonId())
-                        .ownerName(sermon.getOwner().getName())
-                        .sermonDate(sermon.getSermonDate())
-                        .createdAt(sermon.getCreatedAt())
-                        .updatedAt(sermon.getUpdatedAt())
-                        .isPublic(sermon.isPublic())
-                        .worshipType(sermon.getWorshipType())
-                        .mainScripture(sermon.getMainScripture())
-                        .additionalScripture(sermon.getAdditionalScripture())
-                        .sermonTitle(sermon.getSermonTitle())
-                        .summary(sermon.getSummary())
-                        .notes(sermon.getNotes())
-                        .recordInfo(sermon.getRecordInfo())
-                        .fileCode(sermon.getFileCode())
-                        .build())
+                .map(this::mapToSermonResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    // GET public sermons by USER
+    public List<SermonResponseDTO> getPublicSermonsByUser(String userId) {
+        UUID userUUID = UUID.fromString(userId);
+        return sermonRepository.findByOwner_IdAndIsPublicTrue(userUUID).stream()
+                .map(this::mapToSermonResponseDTO)
                 .collect(Collectors.toList());
     }
 
