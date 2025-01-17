@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -261,4 +262,64 @@ public class SermonService {
         sermonRepository.delete(sermon);
     }
 
+    public List<SermonResponseDTO> searchSermons(String keyword, String userId, String searchIn) {
+        UUID userUUID = UUID.fromString(userId);
+
+        List<Sermon> results;
+        switch (searchIn.toLowerCase()) {
+            case "title":
+                results = sermonRepository.searchBySermonTitle(keyword, userUUID);
+                break;
+            case "content":
+                results = sermonRepository.searchBySermonTitleOrContent(keyword, userUUID)
+                        .stream()
+                        .filter(sermon -> sermon.getContents().stream()
+                                .anyMatch(content -> content.getContentText().toLowerCase().contains(keyword.toLowerCase())))
+                        .collect(Collectors.toList());
+                break;
+            case "both":
+            default:
+                results = sermonRepository.searchBySermonTitleOrContent(keyword, userUUID);
+                break;
+        }
+
+        // Sort Sermon entities by sermonId descending
+        results.sort(Comparator.comparingLong(Sermon::getSermonId).reversed());
+
+        // Map sorted Sermons to SermonResponseDTOs
+        return results.stream()
+                .map(this::mapToSermonResponseDTO)
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+
+    // Utility to map Sermon to SermonResponseDTO
+    private SermonResponseDTO mapToSermonResponseDTO(Sermon sermon) {
+        List<ContentDTO> contents = sermon.getContents().stream()
+                .map(content -> ContentDTO.builder()
+                        .contentId(content.getContentId())
+                        .fileCode(content.getFileCode())
+                        .contentText(content.getContentText())
+                        .build())
+                .collect(Collectors.toList());
+
+        return SermonResponseDTO.builder()
+                .sermonId(sermon.getSermonId())
+                .ownerName(sermon.getOwner().getName())
+                .sermonDate(sermon.getSermonDate())
+                .createdAt(sermon.getCreatedAt())
+                .updatedAt(sermon.getUpdatedAt())
+                .isPublic(sermon.isPublic())
+                .worshipType(sermon.getWorshipType())
+                .mainScripture(sermon.getMainScripture())
+                .additionalScripture(sermon.getAdditionalScripture())
+                .sermonTitle(sermon.getSermonTitle())
+                .summary(sermon.getSummary())
+                .notes(sermon.getNotes())
+                .recordInfo(sermon.getRecordInfo())
+                .fileCode(sermon.getFileCode())
+                .contents(contents)
+                .build();
+    }
 }

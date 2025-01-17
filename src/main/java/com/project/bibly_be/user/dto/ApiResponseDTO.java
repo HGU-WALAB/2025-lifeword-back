@@ -9,7 +9,7 @@ public class ApiResponseDTO<T> {
     private final boolean success;
     private final String message;
     private final int status;
-    private final T data;
+    private final T data;//data;
 
     public static <T> ApiResponseDTO<T> success(String message, T data) {
         return new ApiResponseDTO<>(true, message, 200, data);

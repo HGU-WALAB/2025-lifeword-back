@@ -91,4 +91,13 @@ public class SermonController {
         sermonService.deleteSermon(sermonId, loggedInUserId);
     }
 
+    @Operation(summary = "설교 SEARCH ! 케이스 3개로 나눴어요 ~ ( SearchSermon ) ", description = " searchin = 에서 title == keyword이 제목에만 있는 설교 불러오기, content == ㅣ눠브")
+    @GetMapping("/search")
+    public List<SermonResponseDTO> searchSermons(@RequestParam("keyword") String keyword,
+                                                 @RequestParam("userId") String userId,
+                                                 @RequestParam(value = "searchIn", defaultValue = "both") String searchIn) {
+        return sermonService.searchSermons(keyword, userId, searchIn);
+    }
+
+
 }
