@@ -177,16 +177,18 @@ public class SermonService {
     }
 
     // PATCH a sermon
-    public SermonResponseDTO updateSermon(Long sermonId, SermonRequestDTO requestDTO, String loggedInUserId) {
-        // FETCH the sermon to update
+    @Transactional
+    public SermonResponseDTO updateSermonAndContent(Long sermonId, String loggedInUserId, SermonRequestDTO requestDTO) {
+        // Fetch the sermon by ID
         Sermon sermon = sermonRepository.findById(sermonId)
                 .orElseThrow(() -> new IllegalArgumentException("Sermon not found"));
 
-        // 주인장 확인하기
+        // Check if the logged-in user is the owner
         if (!sermon.getOwner().getId().toString().equals(loggedInUserId)) {
             throw new IllegalArgumentException("Unauthorized to update this sermon");
         }
 
+        // Update sermon fields
         sermon.setSermonDate(LocalDate.parse(requestDTO.getSermonDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")).atStartOfDay());
         sermon.setWorshipType(requestDTO.getWorshipType());
         sermon.setMainScripture(requestDTO.getMainScripture());
@@ -197,26 +199,18 @@ public class SermonService {
         sermon.setRecordInfo(requestDTO.getRecordInfo());
         sermon.setPublic(requestDTO.isPublic());
 
+        // Fetch content and update
+        Content content = sermon.getContents().stream()
+                .findFirst() // Assuming 1-to-1 relation between Sermon and Content
+                .orElseThrow(() -> new IllegalArgumentException("Content not found for this sermon"));
+
+        content.setContentText(requestDTO.getContentText());
+        contentRepository.save(content);
+
         Sermon updatedSermon = sermonRepository.save(sermon);
 
-        return SermonResponseDTO.builder()
-                .sermonId(updatedSermon.getSermonId())
-                .ownerName(updatedSermon.getOwner().getName())
-                .sermonDate(updatedSermon.getSermonDate())
-                .createdAt(updatedSermon.getCreatedAt())
-                .updatedAt(updatedSermon.getUpdatedAt())
-                .isPublic(updatedSermon.isPublic())
-                .worshipType(updatedSermon.getWorshipType())
-                .mainScripture(updatedSermon.getMainScripture())
-                .additionalScripture(updatedSermon.getAdditionalScripture())
-                .sermonTitle(updatedSermon.getSermonTitle())
-                .summary(updatedSermon.getSummary())
-                .notes(updatedSermon.getNotes())
-                .recordInfo(updatedSermon.getRecordInfo())
-                .fileCode(updatedSermon.getFileCode())
-                .build();
+        return mapToSermonResponseDTO(updatedSermon);
     }
-
 
     // DELETE sermon
     public void deleteSermon(Long sermonId, String loggedInUserId) {

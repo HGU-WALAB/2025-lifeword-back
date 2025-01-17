@@ -68,7 +68,7 @@ public class SermonController {
     }
 
     // PATCH sermon
-    @Operation(summary = "설교 수정띠 , 로그인된  ID 보내 주시면 비교해서 업뎃해줌( UpdateSermon ) ")
+    @Operation(summary = "설교 및 내용 업데이트 (Update Sermon and Content)", description = "특정 설교와 그 내용을 동시에 수정합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Successfully updated the sermon"),
             @ApiResponse(responseCode = "400", description = "Invalid request payload"),
@@ -76,12 +76,13 @@ public class SermonController {
             @ApiResponse(responseCode = "403", description = "Unauthorized to update this sermon"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    @PatchMapping("/{sermonId}")
-    public SermonResponseDTO updateSermon(@PathVariable Long sermonId,
-                                          @RequestBody SermonRequestDTO requestDTO,
-                                          @RequestParam("userId") String loggedInUserId) {
-        return sermonService.updateSermon(sermonId, requestDTO, loggedInUserId);
+    @PatchMapping("/update/{sermonId}")
+    public SermonResponseDTO updateSermonAndContent(@PathVariable Long sermonId,
+                                                    @RequestParam("userId") String loggedInUserId,
+                                                    @RequestBody SermonRequestDTO requestDTO) {
+        return sermonService.updateSermonAndContent(sermonId, loggedInUserId, requestDTO);
     }
+
 
 
     // DELETE sermon
