@@ -16,9 +16,12 @@ public interface SermonRepository extends JpaRepository<Sermon, Long> {
 
     boolean existsByFileCode(String fileCode);
 
-    List<Sermon> findByOwner_IdAndIsPublicFalse(UUID ownerId);
+    // GET USER semormon
 
-    List<Sermon> findByOwner_Id(UUID ownerId);
+        List<Sermon> findByOwner_Id(UUID ownerId);
+        List<Sermon> findByOwner_IdAndIsPublicFalse(UUID ownerId);
+        List<Sermon> findByOwner_IdAndIsPublicTrue(UUID ownerId);
+
 
 
     // Search private sermons by title for a specific user
