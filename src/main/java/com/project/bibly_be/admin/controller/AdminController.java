@@ -1,5 +1,6 @@
 package com.project.bibly_be.admin.controller;
 
+import com.project.bibly_be.user.dto.UserRequestDTO;
 import com.project.bibly_be.user.entity.User;
 import com.project.bibly_be.user.dto.UserResponseDTO;
 import com.project.bibly_be.user.service.UserService;
@@ -43,7 +44,7 @@ public class AdminController {
      *     /search?type=job&value=teacher
      *     /search?type=church&value=seoul
      */
-    @Operation(summary = "type 파라미터 종류 : name, job, church, email")
+    @Operation(summary = "Admin 입장에서 User Search입니다요 type 파라미터 종류 : name, job, church, email")
 
     @GetMapping("/search")
     public ResponseEntity<List<User>> searchUsers(
@@ -71,4 +72,13 @@ public class AdminController {
 
         return ResponseEntity.ok(users);
     }
+    @PatchMapping("/{id}")
+    public ResponseEntity<UserResponseDTO> updateUser(
+            @PathVariable UUID id,
+            @RequestBody UserRequestDTO updateRequestDTO
+    ) {
+        UserResponseDTO updatedUser = userService.updateUser(id, updateRequestDTO);
+        return ResponseEntity.ok(updatedUser);
+    }
+
 }
