@@ -127,6 +127,7 @@ public class SermonService {
                 .map(sermon -> SermonResponseDTO.builder()
                         .sermonId(sermon.getSermonId())
                         .ownerName(sermon.getOwner().getName())
+                        .userId(sermon.getOwner().getId()) //UUID userId
                         .sermonDate(sermon.getSermonDate())
                         .createdAt(sermon.getCreatedAt())
                         .updatedAt(sermon.getUpdatedAt())
