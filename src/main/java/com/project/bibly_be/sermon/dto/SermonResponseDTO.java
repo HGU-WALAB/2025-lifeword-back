@@ -5,12 +5,14 @@ import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Builder
 public class SermonResponseDTO {
     private Long sermonId;
     private String ownerName;
+    private UUID userId; //UUID 추가
     private LocalDateTime sermonDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
