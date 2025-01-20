@@ -17,6 +17,7 @@ public class SwaggerConfig {
         Server server = new Server();
 
         server.setUrl("/naimkim_1");
+        //server.setUrl("/localhost:8080");
 
         List<Server> servers = new ArrayList<>();
         servers.add(server);

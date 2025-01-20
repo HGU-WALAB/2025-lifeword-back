@@ -120,6 +120,29 @@ public class SermonService {
                 .collect(Collectors.toList());
     }
 
+
+    // GET all public&Private sermons (for Admin)
+    public List<SermonResponseDTO> getAllSermons() {
+        return sermonRepository.findAll().stream()
+                .map(sermon -> SermonResponseDTO.builder()
+                        .sermonId(sermon.getSermonId())
+                        .ownerName(sermon.getOwner().getName())
+                        .sermonDate(sermon.getSermonDate())
+                        .createdAt(sermon.getCreatedAt())
+                        .updatedAt(sermon.getUpdatedAt())
+                        .isPublic(sermon.isPublic())
+                        .worshipType(sermon.getWorshipType())
+                        .mainScripture(sermon.getMainScripture())
+                        .additionalScripture(sermon.getAdditionalScripture())
+                        .sermonTitle(sermon.getSermonTitle())
+                        .summary(sermon.getSummary())
+                        .notes(sermon.getNotes())
+                        .recordInfo(sermon.getRecordInfo())
+                        .fileCode(sermon.getFileCode())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
     // GET all sermons by USER
     public List<SermonResponseDTO> getAllSermonsByUser(String userId) {
         UUID userUUID = UUID.fromString(userId);
@@ -160,6 +183,7 @@ public class SermonService {
         return SermonResponseDTO.builder()
                 .sermonId(sermon.getSermonId())
                 .ownerName(sermon.getOwner().getName())
+                .userId(sermon.getOwner().getId()) // user's UUID -> userId :
                 .sermonDate(sermon.getSermonDate())
                 .createdAt(sermon.getCreatedAt())
                 .updatedAt(sermon.getUpdatedAt())

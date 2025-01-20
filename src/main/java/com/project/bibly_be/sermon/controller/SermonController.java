@@ -31,6 +31,10 @@ public class SermonController {
         return sermonService.getAllPublicSermons();
     }
 
+    @Operation(summary =  "Admin 용 모든 설교 불러오그 (private & public) ")
+    @GetMapping("/admin/list")
+    public List<SermonResponseDTO> getAllSermons() {return sermonService.getAllSermons();}
+
     @Operation(summary = "유저별 sermons list all, private, public! ( UserSermonList ) ")
     @GetMapping("/user/list")
     public List<SermonResponseDTO> getUserSermons(
@@ -53,8 +57,9 @@ public class SermonController {
     @Operation(summary = " 선택한 설교 details 페이지 contents 도 보내드림 ( SermonDetails )")
     @GetMapping("/details/{sermonId}")
     public SermonResponseDTO getSermonDetails(@PathVariable Long sermonId) {
-        return sermonService.getSermonDetails(sermonId);
+        return sermonService.getSermonDetails(sermonId); // <--- UUID 추가
     }
+
     // CREATE new sermon
     @Operation(summary = "설교 추가 ( AddSermon ) ")
     @ApiResponses({
