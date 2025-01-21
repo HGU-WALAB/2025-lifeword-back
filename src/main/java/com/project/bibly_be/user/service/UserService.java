@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.project.bibly_be.user.util.OauthProviderUtil;
 
 import java.util.InputMismatchException;
 import java.util.List;
@@ -23,61 +24,61 @@ public class UserService {
 
     // 사용자 생성
     public UserResponseDTO createUser(UserRequestDTO request) {
-        boolean isBibly = false;
+        // 1) 필수값 체크 로직 (생략)
 
-        if (request.getOauthProvider() != null) {
-            // Check if it's a Bibly user
-            if (request.getOauthProvider().equals("bibly")) {
-                isBibly = true;
-
-                if (request.getPassword() == null || request.getEmail() == null || request.getName() == null ||
-                        request.getContact() == null || request.getChurch() == null || request.getJob() == null || request.getPlace() == null) {
-                    throw new IllegalArgumentException("필수 입력 값이 누락되었습니다. bibly");
-                }
-            } else {
-                // Check for Kakao or Google case
-                if (request.getOauthUid() == null || request.getEmail() == null || request.getName() == null ||
-                        request.getContact() == null || request.getChurch() == null || request.getJob() == null || request.getPlace() == null) {
-                    throw new IllegalArgumentException("필수 입력 값이 누락되었습니다. kakao/google");
-                }
-            }
-        } else {
-            throw new IllegalArgumentException("OauthProvider 값 누락됨유");
-        }
-
-        // Check if the email already exists
+        // 2) 이메일 중복 체크
         Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
         if (existingUser.isPresent()) {
+            // 이미 존재하는 사용자
             User user = existingUser.get();
 
-            // Add new provider if it doesn't already exist
-            if (!request.getOauthProvider().equals(user.getOauthProvider())) {
-                user.setOauthProvider(request.getOauthProvider());
-                user.setOauthUid(request.getOauthUid());
-                userRepository.save(user);
-            }
+            // ---- (A) DB에 저장된 JSON을 List<String> 형태로 변환 ----
+            List<String> providerList = OauthProviderUtil.jsonToList(user.getOauthProvider());
 
+            // ---- (B) 새로 들어온 OauthProvider에 해당하는 인덱스 찾아 값 세팅 ----
+            int idx = OauthProviderUtil.getProviderIndex(request.getOauthProvider());
+            providerList.set(idx, request.getOauthProvider());
+
+            // ---- (C) 다시 JSON 문자열로 변환하고, user에 세팅 ----
+            user.setOauthProvider(OauthProviderUtil.listToJson(providerList));
+
+            // ---- (D) oauthUid 갱신 (단, Provider별 Uid를 따로 저장하고 싶으면 따로 로직 추가 필요) ----
+            user.setOauthUid(request.getOauthUid());
+
+            userRepository.save(user);
             return UserResponseDTO.from(user);
+
+        } else {
+            // ---- 새 사용자 생성 ----
+            // (A) [null, null, null] 생성
+            List<String> providerList = OauthProviderUtil.initProviderList();
+            // (B) index 찾기
+            int idx = OauthProviderUtil.getProviderIndex(request.getOauthProvider());
+            // (C) 해당 위치에 provider 문자열 대입
+            providerList.set(idx, request.getOauthProvider());
+
+            // (D) JSON 변환
+            String providerJson = OauthProviderUtil.listToJson(providerList);
+
+            // (E) User 빌드
+            User user = User.builder()
+                    .oauthProvider(providerJson)   // 예: ["kakao", null, null]
+                    .oauthUid(request.getOauthUid())
+                    .email(request.getEmail())
+                    .password(request.getPassword())
+                    .name(request.getName())
+                    .contact(request.getContact())
+                    .church(request.getChurch())
+                    .job(request.getJob())
+                    .place(request.getPlace())
+                    .isAdmin(false)
+                    .build();
+
+            // (F) 저장
+            User savedUser = userRepository.save(user);
+            return UserResponseDTO.from(savedUser);
         }
-
-        // Create a new user if no existing email is found
-        User user = User.builder()
-                .oauthProvider(request.getOauthProvider())
-                .oauthUid(request.getOauthUid())
-                .email(request.getEmail())
-                .password(request.getPassword())
-                .name(request.getName())
-                .contact(request.getContact())
-                .church(request.getChurch())
-                .job(request.getJob())
-                .place(request.getPlace())
-                .isAdmin(false)
-                .build();
-
-        User savedUser = userRepository.save(user);
-        return UserResponseDTO.from(savedUser);
     }
-
 
     // 사용자 존재 여부 확인 (kakao/google case only)
     @Transactional(readOnly = true)
