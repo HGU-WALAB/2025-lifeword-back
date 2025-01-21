@@ -4,11 +4,11 @@ import com.project.bibly_be.user.dto.UserRequestDTO;
 import com.project.bibly_be.user.dto.UserResponseDTO;
 import com.project.bibly_be.user.entity.User;
 import com.project.bibly_be.user.repository.UserRepository;
+import com.project.bibly_be.user.util.OauthProviderUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.project.bibly_be.user.util.OauthProviderUtil;
 
 import java.util.InputMismatchException;
 import java.util.List;
@@ -25,7 +25,27 @@ public class UserService {
     // 사용자 생성
     public UserResponseDTO createUser(UserRequestDTO request) {
         // 1) 필수값 체크 로직 (생략)
+        boolean isBibly = false;
 
+        if (request.getOauthProvider() != null) {
+            // Check if it's a Bibly user
+            if (request.getOauthProvider().equals("bibly")) {
+                isBibly = true;
+
+                if (request.getPassword() == null || request.getEmail() == null || request.getName() == null ||
+                        request.getContact() == null || request.getChurch() == null || request.getJob() == null || request.getPlace() == null) {
+                    throw new IllegalArgumentException("필수 입력 값이 누락되었습니다. bibly");
+                }
+            } else {
+                // Check for Kakao or Google case
+                if (request.getOauthUid() == null || request.getEmail() == null || request.getName() == null ||
+                        request.getContact() == null || request.getChurch() == null || request.getJob() == null || request.getPlace() == null) {
+                    throw new IllegalArgumentException("필수 입력 값이 누락되었습니다. kakao/google");
+                }
+            }
+        } else {
+            throw new IllegalArgumentException("OauthProvider 값 누락됨유");
+        }
         // 2) 이메일 중복 체크
         Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
         if (existingUser.isPresent()) {
@@ -79,6 +99,8 @@ public class UserService {
             return UserResponseDTO.from(savedUser);
         }
     }
+
+
 
     // 사용자 존재 여부 확인 (kakao/google case only)
     @Transactional(readOnly = true)
