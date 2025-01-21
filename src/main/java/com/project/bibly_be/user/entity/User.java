@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import net.minidev.json.JSONArray;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,8 +24,10 @@ public class User {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id; //오류 생기면 String으로 받아오기.
 
-    @Column(name = "oauth_provider")
-    private String oauthProvider;
+    @Column(name = "oauth_provider", columnDefinition = "JSON")
+     private String oauthProvider;
+
+
 
     // 소셜 로그인 식별자 (kakaoUid, googleUid 등 통합)
     @Column(name = "oauth_uid", unique = true)
