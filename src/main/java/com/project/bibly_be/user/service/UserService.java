@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.InputMismatchException;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -23,33 +24,43 @@ public class UserService {
     // 사용자 생성
     public UserResponseDTO createUser(UserRequestDTO request) {
         boolean isBibly = false;
-        if(request.getOauthProvider()!=null) {
-            //  Bibly case
-            if(request.getOauthProvider().equals("bibly")){ // password ==null check included
-                // isBibly -> true
+
+        if (request.getOauthProvider() != null) {
+            // Check if it's a Bibly user
+            if (request.getOauthProvider().equals("bibly")) {
                 isBibly = true;
-                if (request.getPassword()==null||request.getEmail() == null || request.getName() == null ||
+
+                if (request.getPassword() == null || request.getEmail() == null || request.getName() == null ||
                         request.getContact() == null || request.getChurch() == null || request.getJob() == null || request.getPlace() == null) {
-                    throw new IllegalArgumentException("필수 입력 값이 누락되었습니다. bibly"); // uid 제외 필드 값중 뭔가가 빠졌으면 익셉션 쓰로
+                    throw new IllegalArgumentException("필수 입력 값이 누락되었습니다. bibly");
                 }
-            }
-            // kakao Google case]
-            else { // OauthUid ==null check
+            } else {
+                // Check for Kakao or Google case
                 if (request.getOauthUid() == null || request.getEmail() == null || request.getName() == null ||
                         request.getContact() == null || request.getChurch() == null || request.getJob() == null || request.getPlace() == null) {
-                    throw new IllegalArgumentException("필수 입력 값이 누락되었습니다. kakao/google "); // password 제외 필드 값중 뭔가가 빠졌으면 익셉션 쓰로
+                    throw new IllegalArgumentException("필수 입력 값이 누락되었습니다. kakao/google");
                 }
             }
+        } else {
+            throw new IllegalArgumentException("OauthProvider 값 누락됨유");
+        }
 
-        }
-        else  throw new IllegalArgumentException("OauthProvider 값 누락됨유");
-        // bibly sign in 이 아닐때민 체크 ( bibly sign in  중복 유저는 이매일 중복 확인으로 이미 확인함> verify api
-        if(!isBibly) {
-            boolean exists = userRepository.findByOauthUid(request.getOauthUid()).isPresent();
-            if (exists) {
-                throw new IllegalArgumentException("이미 존재하는 사용자에유");    // 나중에 id 중복확일 할때 더 추가 할거임유
+        // Check if the email already exists
+        Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
+
+            // Add new provider if it doesn't already exist
+            if (!request.getOauthProvider().equals(user.getOauthProvider())) {
+                user.setOauthProvider(request.getOauthProvider());
+                user.setOauthUid(request.getOauthUid());
+                userRepository.save(user);
             }
+
+            return UserResponseDTO.from(user);
         }
+
+        // Create a new user if no existing email is found
         User user = User.builder()
                 .oauthProvider(request.getOauthProvider())
                 .oauthUid(request.getOauthUid())
@@ -60,40 +71,47 @@ public class UserService {
                 .church(request.getChurch())
                 .job(request.getJob())
                 .place(request.getPlace())
-                .isAdmin(false) // default is false -> no admin authority given
+                .isAdmin(false)
                 .build();
 
         User savedUser = userRepository.save(user);
         return UserResponseDTO.from(savedUser);
     }
 
+
     // 사용자 존재 여부 확인 (kakao/google case only)
     @Transactional(readOnly = true)
     public UserResponseDTO.VerifyResponse verifyUserSns(String oauthUid) {
         User user = userRepository.findByOauthUid(oauthUid)
-                .orElseThrow(()->new UsernameNotFoundException("해당 사용자를 찾을 수 없음요"));
+                .orElseThrow(() -> new UsernameNotFoundException("해당 사용자를 찾을 수 없음요"));
 
         return UserResponseDTO.VerifyResponse.builder()
-                .exists(user != null) // exists(true)
-                .userId(user != null ? user.getId() : null)
+                .exists(true)
+                .userId(user.getId())
                 .job(user.getJob())
                 .isAdmin(user.getIsAdmin())
                 .build();
     }
+
 
     // 사용자 존재 여부 확인 (biblycase only)
     @Transactional(readOnly = true)
     public UserResponseDTO.VerifyResponse verifyUserBibly(String email, String password) {
-        User user = userRepository.findUsersByEmailAndOauthProvider(email,"bibly")
-                .orElseThrow(()->new UsernameNotFoundException("해당 사용자를 찾을 수 없음요"));
-        if(!user.getPassword().equals(password)) throw new InputMismatchException("비밀 번호 틀림요"); // security 문제 있을까?
+        User user = userRepository.findUsersByEmailAndOauthProvider(email, "bibly")
+                .orElseThrow(() -> new UsernameNotFoundException("해당 사용자를 찾을 수 없음요"));
+
+        if (!user.getPassword().equals(password)) {
+            throw new InputMismatchException("비밀번호 틀림요");
+        }
+
         return UserResponseDTO.VerifyResponse.builder()
-                .exists(true) // exists(true)
-                .userId(user.getId())//.userId(user != null ? user.getId() : null)
+                .exists(true)
+                .userId(user.getId())
                 .job(user.getJob())
                 .isAdmin(user.getIsAdmin())
                 .build();
     }
+
 
     /**
      * 모든 사용자 조회 (Admin 전용)
