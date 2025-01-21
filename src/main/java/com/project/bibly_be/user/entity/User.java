@@ -30,8 +30,9 @@ public class User {
     @Column(name = "oauth_uid", unique = true)
     private String oauthUid;
 
-    @Column(name = "email")
+    @Column(name = "email", unique = true)
     private String email;
+
 
     @Column(name = "password")
     private String password;

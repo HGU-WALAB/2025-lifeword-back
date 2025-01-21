@@ -22,6 +22,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     List<User> findByJobContaining(String job); // 직업으로 검색
     List<User> findByChurchContaining(String church); // 교회로 검색
     List<User> findByEmailContaining(String email);
+    Optional<User> findByEmail(String email);
+
 
 
 }
