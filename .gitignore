@@ -39,3 +39,4 @@ out/
 *.properties
 
 config/
+/bible_backup.sql
