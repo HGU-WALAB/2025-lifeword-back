@@ -50,12 +50,12 @@ public class UserController {
     })
     @GetMapping("/verify/kakao-google") // kakao google case
     public ApiResponseDTO<UserResponseDTO.VerifyResponse> verifyUserSns(
-            @RequestParam("oauthUid") String oauthUid
+            @RequestParam("email") String email
             // @RequestParam("oauthProvider") String oauthProvider // 필요 시 추가
     ) {
         try {
             // 현재는 oauthUid로만 찾도록 구현된 예시
-            UserResponseDTO.VerifyResponse response = userService.verifyUserSns(oauthUid);
+            UserResponseDTO.VerifyResponse response = userService.verifyUserSns(email);
             return ApiResponseDTO.success("사용자 확인 완료", response);
         } catch (UsernameNotFoundException e) {
             return ApiResponseDTO.error(e.getMessage(), HttpStatus.NOT_FOUND.value());
