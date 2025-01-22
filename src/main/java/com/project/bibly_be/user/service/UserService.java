@@ -5,15 +5,13 @@ import com.project.bibly_be.user.dto.UserResponseDTO;
 import com.project.bibly_be.user.entity.User;
 import com.project.bibly_be.user.repository.UserRepository;
 import com.project.bibly_be.user.util.OauthProviderUtil;
+import com.project.bibly_be.user.util.OauthUidUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.InputMismatchException;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,9 +22,9 @@ public class UserService {
 
     // 사용자 생성
     public UserResponseDTO createUser(UserRequestDTO request) {
-        // 1) 필수값 체크 로직 (생략)
         boolean isBibly = false;
 
+        // 1) 필수값 체크 로직
         if (request.getOauthProvider() != null) {
             // Check if it's a Bibly user
             if (request.getOauthProvider().equals("bibly")) {
@@ -46,44 +44,41 @@ public class UserService {
         } else {
             throw new IllegalArgumentException("OauthProvider 값 누락됨유");
         }
+
         // 2) 이메일 중복 체크
         Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
         if (existingUser.isPresent()) {
-            // 이미 존재하는 사용자
+            // ---- (A) 이미 존재하는 사용자 ----
             User user = existingUser.get();
 
-            // ---- (A) DB에 저장된 JSON을 List<String> 형태로 변환 ----
+            // ---- (B) 기존 oauthProvider를 JSON 배열로 관리 ----
             List<String> providerList = OauthProviderUtil.jsonToList(user.getOauthProvider());
-
-            // ---- (B) 새로 들어온 OauthProvider에 해당하는 인덱스 찾아 값 세팅 ----
             int idx = OauthProviderUtil.getProviderIndex(request.getOauthProvider());
             providerList.set(idx, request.getOauthProvider());
-
-            // ---- (C) 다시 JSON 문자열로 변환하고, user에 세팅 ----
             user.setOauthProvider(OauthProviderUtil.listToJson(providerList));
 
-            // ---- (D) oauthUid 갱신 (단, Provider별 Uid를 따로 저장하고 싶으면 따로 로직 추가 필요) ----
-            user.setOauthUid(request.getOauthUid());
+            // ---- (C) Provider별 UID를 JSON으로 관리 ----
+            List<String> uidList = OauthUidUtil.jsonToList(user.getOauthUid());
+            uidList.set(idx,request.getOauthUid());
+            user.setOauthUid(OauthUidUtil.listToJson(uidList));
 
             userRepository.save(user);
             return UserResponseDTO.from(user);
 
         } else {
-            // ---- 새 사용자 생성 ----
-            // (A) [null, null, null] 생성
+            // ---- (D) 새 사용자 생성 ----
+            // Provider 리스트 초기화
             List<String> providerList = OauthProviderUtil.initProviderList();
-            // (B) index 찾기
             int idx = OauthProviderUtil.getProviderIndex(request.getOauthProvider());
-            // (C) 해당 위치에 provider 문자열 대입
             providerList.set(idx, request.getOauthProvider());
 
-            // (D) JSON 변환
-            String providerJson = OauthProviderUtil.listToJson(providerList);
+            // UID 맵 초기화
+            List<String> uidList = OauthUidUtil.initUidList();
+            uidList.set(idx, request.getOauthUid());
 
-            // (E) User 빌드
             User user = User.builder()
-                    .oauthProvider(providerJson)   // 예: ["kakao", null, null]
-                    .oauthUid(request.getOauthUid())
+                    .oauthProvider(OauthProviderUtil.listToJson(providerList)) // JSON 배열 저장
+                    .oauthUid(OauthUidUtil.listToJson(uidList))                  // JSON 객체 저장
                     .email(request.getEmail())
                     .password(request.getPassword())
                     .name(request.getName())
@@ -94,7 +89,6 @@ public class UserService {
                     .isAdmin(false)
                     .build();
 
-            // (F) 저장
             User savedUser = userRepository.save(user);
             return UserResponseDTO.from(savedUser);
         }
@@ -104,7 +98,7 @@ public class UserService {
 
     // 사용자 존재 여부 확인 (kakao/google case only)
     @Transactional(readOnly = true)
-    public UserResponseDTO.VerifyResponse verifyUserSns(String oauthUid) {
+    public UserResponseDTO.VerifyResponse verifyUserSns(String oauthUid) { //String oauthProvider
         User user = userRepository.findByOauthUid(oauthUid)
                 .orElseThrow(() -> new UsernameNotFoundException("해당 사용자를 찾을 수 없음요"));
 
@@ -117,22 +111,59 @@ public class UserService {
     }
 
 
-    // 사용자 존재 여부 확인 (biblycase only)
     @Transactional(readOnly = true)
     public UserResponseDTO.VerifyResponse verifyUserBibly(String email, String password) {
-        User user = userRepository.findUsersByEmailAndOauthProvider(email, "bibly")
-                .orElseThrow(() -> new UsernameNotFoundException("해당 사용자를 찾을 수 없음요"));
+        // 1) bibly로 가입한 사용자를 찾는다
+        Optional<User> biblyUserOpt = userRepository.findUsersByEmailAndOauthProvider(email, "bibly");
 
-        if (!user.getPassword().equals(password)) {
-            throw new InputMismatchException("비밀번호 틀림요");
+        if (biblyUserOpt.isPresent()) {
+            // --- (A) 이미 bibly로 가입된 경우 ---
+            User biblyUser = biblyUserOpt.get();
+
+            // (A-1) 패스워드 검증
+            if (!biblyUser.getPassword().equals(password)) {
+                throw new InputMismatchException("비밀번호 틀림요");
+            }
+
+            // (A-2) 로그인 성공 → 응답 반환
+            return UserResponseDTO.VerifyResponse.builder()
+                    .exists(true)
+                    .userId(biblyUser.getId())
+                    .job(biblyUser.getJob())
+                    .isAdmin(biblyUser.getIsAdmin())
+                    .build();
+
+        } else {
+            // --- (B) bibly로 가입된 레코드가 없음 ---
+            // (B-1) 혹시 다른 Provider(kakao/google)로 가입된 사용자 존재하는지 확인
+            Optional<User> anyUserOpt = userRepository.findByEmail(email);
+
+            if (anyUserOpt.isPresent()) {
+                // (B-2) 이미 kakao/google 등으로 가입된 이메일
+
+                // ===== 미리 주석 처리해둔 "미래 로직" =====
+                // 나중에 카카오/구글로 가입한 사용자도 마이페이지에서 비밀번호를 설정하면
+                // bibly 로그인 가능하게 하고 싶을 때, 아래 주석을 해제하고 로직을 완성합니다.
+            /*
+            User anyUser = anyUserOpt.get();
+            // Password가 이미 설정되어 있고, 그게 입력한 password와 같다면 bibly로도 로그인 허용
+            if (anyUser.getPassword() != null && anyUser.getPassword().equals(password)) {
+                return UserResponseDTO.VerifyResponse.builder()
+                        .exists(true)
+                        .userId(anyUser.getId())
+                        .job(anyUser.getJob())
+                        .isAdmin(anyUser.getIsAdmin())
+                        .build();
+            }
+            */
+
+                // 주석 해제 전까지는 "이미 가입된 이메일" 예외로 처리
+                throw new IllegalStateException("이미 다른 Provider로 가입된 이메일이므로 bibly 로그인 불가");
+            } else {
+                // (B-3) 완전히 없는 이메일 → 일반 "사용자 없음" 처리
+                throw new UsernameNotFoundException("해당 사용자를 찾을 수 없음요");
+            }
         }
-
-        return UserResponseDTO.VerifyResponse.builder()
-                .exists(true)
-                .userId(user.getId())
-                .job(user.getJob())
-                .isAdmin(user.getIsAdmin())
-                .build();
     }
 
 

@@ -30,7 +30,7 @@ public class User {
 
 
     // 소셜 로그인 식별자 (kakaoUid, googleUid 등 통합)
-    @Column(name = "oauth_uid", unique = true)
+    @Column(name = "oauth_uid", columnDefinition = "JSON")
     private String oauthUid;
 
     @Column(name = "email", unique = true)

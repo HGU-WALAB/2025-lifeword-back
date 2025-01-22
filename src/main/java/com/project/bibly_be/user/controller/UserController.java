@@ -49,9 +49,11 @@ public class UserController {
             @ApiResponse(responseCode = "500", description = "서버 오류 발생")
     })
     @GetMapping("/verify/kakao-google") // kakao google case
-    public ApiResponseDTO<UserResponseDTO.VerifyResponse> verifyUser(
+    public ApiResponseDTO<UserResponseDTO.VerifyResponse> verifyUserSns(
             @RequestParam("oauthUid") String oauthUid
-            )
+           // @RequestParam("oauthProvider") String oauthProvider // 추가
+
+    )
     {
         try {
             UserResponseDTO.VerifyResponse response = userService.verifyUserSns(oauthUid);
@@ -70,8 +72,10 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
             @ApiResponse(responseCode = "500", description = "서버 오류 발생")
     })
+
     @GetMapping("/verify/bibly") // bibly case
-    public ApiResponseDTO<UserResponseDTO.VerifyResponse> verifyUser(
+
+    public ApiResponseDTO<UserResponseDTO.VerifyResponse> verifyUserBibly(
             @RequestParam("email") String email, @RequestParam("password") String password
     )
     {
