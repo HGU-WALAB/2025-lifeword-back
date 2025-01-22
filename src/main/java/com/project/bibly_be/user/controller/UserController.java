@@ -91,13 +91,13 @@ public class UserController {
     /**
      * bibly 이메일 중복 여부 확인
      */
-    @Operation(summary = "OauthProvider == bibly  중 email 중복 여부 확인 [bibly]")
+    @Operation(summary = "모든 OauthProvider 에서 email 중복 여부 확인 [ALL] // 수정 전 /verify/bibily-emailCheck")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "이매일 검색 완료 (OauthProvider 가 bibly 중 검색)"),
             @ApiResponse(responseCode = "404", description = "잘못된 요청 데이터"),
             @ApiResponse(responseCode = "500", description = "서버 오류 발생")
     })
-    @GetMapping("/verify/bibly-emailCheck") // bibly case
+    @GetMapping("/verify/emailCheck") // bibly case
     public boolean verifyUserByEmail(@RequestParam("email") String email) {
         try {
             return userService.verifyUserByEmail(email);
@@ -131,4 +131,30 @@ public class UserController {
             return ApiResponseDTO.error(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
     }
+
+
+    // 마이 페이지 비번 생성/ 바꾸기
+    @Operation(summary = "사용자 마이페이지에서 비번 생성/ 바꾸기")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "업데이트 성공"),
+            @ApiResponse(responseCode = "404", description = "해당 사용자를 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 오류 발생")
+    })
+    @PatchMapping("/setUserPassword")
+    public ApiResponseDTO<UserResponseDTO.VerifyResponse> setUserPassword(
+            @RequestParam("email") String email,
+            @RequestParam("password") String password
+    ){
+        try {
+            UserResponseDTO.VerifyResponse response =
+                    userService.setUserPassword(email, password);
+            return ApiResponseDTO.success("Provider 업데이트 완료", response);
+        } catch (UsernameNotFoundException e) {
+            return ApiResponseDTO.error(e.getMessage(), HttpStatus.NOT_FOUND.value());
+        } catch (Exception e) {
+            return ApiResponseDTO.error(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
+        }
+
+    }
+
 }
