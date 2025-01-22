@@ -33,7 +33,7 @@ public class User {
     @Column(name = "oauth_uid", columnDefinition = "JSON")
     private String oauthUid;
 
-    @Column(name = "email")
+    @Column(name = "email", unique = true)
     private String email;
 
     @Column(name = "password")
