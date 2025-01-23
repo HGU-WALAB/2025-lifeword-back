@@ -198,6 +198,47 @@ public class UserService {
         }
     }
 
+    // SetUserPassword  마이 패이지에서 유저 패스워드 생성
+    @Transactional
+    public UserResponseDTO.VerifyResponse setUserPassword(String email, String password) {
+        Optional<User> users = userRepository.findByEmail(email);
+
+        if(users.isPresent()) {
+            User user = users.get();
+
+
+            // if user doesnt have bibily account yet,
+           List<String> providerList = OauthProviderUtil.jsonToList(user.getOauthProvider());
+           int idx = OauthProviderUtil.getProviderIndex("bibly");
+
+
+            if (providerList.get(idx) == null ){ //"null" 이 아님 **, null 객채임
+               //throw new IllegalStateException("providerList.get(idx): "+providerList.get(idx)+" idx"+idx); //debug
+               // basically same as,
+               // providerList.get(2)  is null value -> then put bibily in ouath provider.set(3)
+
+               providerList.set(idx, "bibly");
+               user.setOauthProvider(OauthProviderUtil.listToJson(providerList)); // setting user Oauth Provider[3] bibly
+
+
+           }
+
+
+            user.setPassword(password);
+            userRepository.save(user);
+
+            return UserResponseDTO.VerifyResponse.builder()
+                    .exists(true) //
+                    .userId(user.getId())
+                    .job(user.getJob())
+                    .isAdmin(user.getIsAdmin())
+                    .build();
+
+        }else{
+            throw  new UsernameNotFoundException("email 로 유저 못 찾음요 ㅠ");
+        }
+    }
+
     // -------------------- (이하 Admin / 기타 메서드 동일) -------------------- //
 
     @Transactional(readOnly = true)
@@ -268,8 +309,9 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public boolean verifyUserByEmail(String email) {
-        boolean exists = userRepository.findUsersByEmailAndOauthProvider(email, "bibly").isPresent();
-        if (!exists) {
+        //boolean exists = userRepository.findUsersByEmailAndOauthProvider(email, "bibly").isPresent();
+        boolean exists = userRepository.findByEmail(email).isPresent(); //"email" is unique key , so only one user will return or false,
+        if(!exists) {
             return false;
         }
         return true;
