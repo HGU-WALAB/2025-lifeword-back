@@ -222,7 +222,9 @@ public class UserService {
 
 
            }
-
+            if(user.getPassword().equals(password)) {
+                throw new IllegalArgumentException("Password already exist");
+            }
 
             user.setPassword(password);
             userRepository.save(user);
