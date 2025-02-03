@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -120,29 +121,13 @@ public class SermonService {
                 .collect(Collectors.toList());
     }
 
-
-    // GET all public&Private sermons (for Admin)
+    // GET all sermons ( for admin )
     public List<SermonResponseDTO> getAllSermons() {
         return sermonRepository.findAll().stream()
-                .map(sermon -> SermonResponseDTO.builder()
-                        .sermonId(sermon.getSermonId())
-                        .ownerName(sermon.getOwner().getName())
-                        .userId(sermon.getOwner().getId()) //UUID userId
-                        .sermonDate(sermon.getSermonDate())
-                        .createdAt(sermon.getCreatedAt())
-                        .updatedAt(sermon.getUpdatedAt())
-                        .isPublic(sermon.isPublic())
-                        .worshipType(sermon.getWorshipType())
-                        .mainScripture(sermon.getMainScripture())
-                        .additionalScripture(sermon.getAdditionalScripture())
-                        .sermonTitle(sermon.getSermonTitle())
-                        .summary(sermon.getSummary())
-                        .notes(sermon.getNotes())
-                        .recordInfo(sermon.getRecordInfo())
-                        .fileCode(sermon.getFileCode())
-                        .build())
+                .map(this::mapToSermonResponseDTO)
                 .collect(Collectors.toList());
     }
+
 
     // GET all sermons by USER
     public List<SermonResponseDTO> getAllSermonsByUser(String userId) {
@@ -283,17 +268,20 @@ public class SermonService {
 
     // Utility to map Sermon to SermonResponseDTO
     private SermonResponseDTO mapToSermonResponseDTO(Sermon sermon) {
-        List<ContentDTO> contents = sermon.getContents().stream()
+        List<ContentDTO> contents = sermon.getContents() != null
+                ? sermon.getContents().stream()
                 .map(content -> ContentDTO.builder()
                         .contentId(content.getContentId())
                         .fileCode(content.getFileCode())
                         .contentText(content.getContentText())
                         .build())
-                .collect(Collectors.toList());
+                .collect(Collectors.toList())
+                : Collections.emptyList();
 
         return SermonResponseDTO.builder()
                 .sermonId(sermon.getSermonId())
-                .ownerName(sermon.getOwner().getName())
+                .ownerName(sermon.getOwner() != null ? sermon.getOwner().getName() : "Unknown Owner")
+                .userId(sermon.getOwner() != null ? sermon.getOwner().getId() : null)  // Ensure userId is mapped correctly
                 .sermonDate(sermon.getSermonDate())
                 .createdAt(sermon.getCreatedAt())
                 .updatedAt(sermon.getUpdatedAt())
@@ -309,4 +297,6 @@ public class SermonService {
                 .contents(contents)
                 .build();
     }
+
+
 }

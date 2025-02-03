@@ -184,14 +184,18 @@ public class UserService {
         } else {
             Optional<User> anyUserOpt = userRepository.findByEmail(email);
             if (anyUserOpt.isPresent()) {
-                // 미래 로직(주석)
-                /*
+
                 User anyUser = anyUserOpt.get();
                 if (anyUser.getPassword() != null && anyUser.getPassword().equals(password)) {
-                    // ...
+                    return UserResponseDTO.VerifyResponse.builder()
+                            .exists(true)
+                            .userId(anyUser.getId())
+                            .job(anyUser.getJob())
+                            .isAdmin(anyUser.getIsAdmin())
+                            .build();
                 }
-                */
-                throw new IllegalStateException("이미 다른 Provider로 가입된 이메일이므로 bibly 로그인 불가");
+
+                throw new IllegalStateException("테스트 에러. 501 error");
             } else {
                 throw new UsernameNotFoundException("해당 사용자를 찾을 수 없음요");
             }

@@ -30,8 +30,10 @@ public class GlobalExceptionHandler {
     // Handle Other Exceptions
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponseDTO<String>> handleGlobalException(Exception ex) {
+        ex.printStackTrace();  // Log stack trace for debugging
+        String message = ex.getMessage() != null ? ex.getMessage() : "No detailed error message available";
         return new ResponseEntity<>(
-                ApiResponseDTO.error("An unexpected error occurred: " + ex.getMessage()),
+                ApiResponseDTO.error("An unexpected error occurred: " + message),
                 HttpStatus.INTERNAL_SERVER_ERROR
         );
     }
