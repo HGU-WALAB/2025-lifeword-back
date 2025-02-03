@@ -223,7 +223,7 @@ public class UserService {
 
            }
             if(user.getPassword().equals(password)) {
-                throw new IllegalArgumentException("Password already exist");
+                throw new IllegalArgumentException("기존 비밀번호와 동일한 비밀번호 입니다.");
             }
 
             user.setPassword(password);
@@ -237,7 +237,7 @@ public class UserService {
                     .build();
 
         }else{
-            throw  new UsernameNotFoundException("email 로 유저 못 찾음요 ㅠ");
+            throw  new UsernameNotFoundException("email과 일치하는 회원이 없습니다.");
         }
     }
 
