@@ -20,6 +20,7 @@ public class AdminController {
     private final UserService userService;
 
     /**
+     *
      * 모든 사용자 조회
      */
     @Operation(summary = "모든 유저 다 불러오기")
