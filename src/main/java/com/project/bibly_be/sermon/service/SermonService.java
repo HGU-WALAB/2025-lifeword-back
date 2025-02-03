@@ -281,6 +281,7 @@ public class SermonService {
         return SermonResponseDTO.builder()
                 .sermonId(sermon.getSermonId())
                 .ownerName(sermon.getOwner() != null ? sermon.getOwner().getName() : "Unknown Owner")
+                .userId(sermon.getOwner() != null ? sermon.getOwner().getId() : null)  // Ensure userId is mapped correctly
                 .sermonDate(sermon.getSermonDate())
                 .createdAt(sermon.getCreatedAt())
                 .updatedAt(sermon.getUpdatedAt())
@@ -296,5 +297,6 @@ public class SermonService {
                 .contents(contents)
                 .build();
     }
+
 
 }
