@@ -21,7 +21,8 @@ public interface SermonRepository extends JpaRepository<Sermon, Long> {
         List<Sermon> findByOwner_Id(UUID ownerId);
         List<Sermon> findByOwner_IdAndIsPublicFalse(UUID ownerId);
         List<Sermon> findByOwner_IdAndIsPublicTrue(UUID ownerId);
-        List<Sermon> findAll(); //
+
+        List<Sermon> findAll();
 
 
     // Search private sermons by title for a specific user
@@ -32,5 +33,6 @@ public interface SermonRepository extends JpaRepository<Sermon, Long> {
     @Query("SELECT DISTINCT s FROM Sermon s LEFT JOIN s.contents c WHERE " +
             "(LOWER(s.sermonTitle) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(c.contentText) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
             "AND s.owner.id = :userId ORDER BY s.sermonId DESC")
+
     List<Sermon> searchBySermonTitleOrContent(@Param("keyword") String keyword, @Param("userId") UUID userId);
 }
