@@ -149,7 +149,11 @@ public class UserController {
             UserResponseDTO.VerifyResponse response =
                     userService.setUserPassword(email, password);
             return ApiResponseDTO.success("Provider 업데이트 완료", response);
-        } catch (UsernameNotFoundException e) {
+
+        } catch (IllegalArgumentException e) {
+            return ApiResponseDTO.error(e.getMessage(), HttpStatus.OK.value());
+        }
+        catch (UsernameNotFoundException e) {
             return ApiResponseDTO.error(e.getMessage(), HttpStatus.NOT_FOUND.value());
         } catch (Exception e) {
             return ApiResponseDTO.error(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());

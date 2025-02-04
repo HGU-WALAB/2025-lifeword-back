@@ -33,7 +33,7 @@ public class SermonController {
 
     @Operation(summary =  "Admin 용 모든 설교 불러오그 (private & public) ")
     @GetMapping("/admin/list")
-    public List<SermonResponseDTO> getAllSermonsForAdmin() {
+    public List<SermonResponseDTO> findAllWithOwner() {
         return sermonService.getAllSermons();
     }
 
