@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Comparator;
@@ -297,6 +298,50 @@ public class SermonService {
                 .contents(contents)
                 .build();
     }
+    public List<SermonResponseDTO> getFilteredSermons(String sortOrder, String worshipType, String author, String startDate, String endDate) {
+        UUID authorId = null;
+        LocalDateTime start = null;
+        LocalDateTime end = null;
+
+        // 1️⃣ 작성자(author) 처리
+        if (author != null && !author.trim().isEmpty()) {
+            User user = userRepository.findByName(author)
+                    .orElse(null); // 작성자 이름으로 사용자 조회
+            if (user != null) {
+                authorId = user.getId(); // UUID 변환
+            }
+        }
+
+        // 2️⃣ 날짜 범위 처리
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        if (startDate != null && !startDate.isEmpty()) {
+            start = LocalDate.parse(startDate, formatter).atStartOfDay();
+        }
+        if (endDate != null && !endDate.isEmpty()) {
+            end = LocalDate.parse(endDate, formatter).atTime(23, 59, 59);
+        }
+
+        // 3️⃣ Repository에서 바로 필터링하여 가져오기
+        List<Sermon> sermons = sermonRepository.findFilteredSermons(
+                "all".equalsIgnoreCase(worshipType) ? null : worshipType,
+                authorId,
+                start,
+                end
+        );
+
+        // 4️⃣ 최신순 / 오래된 순 정렬
+        if ("asc".equalsIgnoreCase(sortOrder)) {
+            sermons.sort(Comparator.comparing(Sermon::getSermonDate));
+        } else {
+            sermons.sort(Comparator.comparing(Sermon::getSermonDate).reversed());
+        }
+
+        return sermons.stream()
+                .map(this::mapToSermonResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+
 
 
 }

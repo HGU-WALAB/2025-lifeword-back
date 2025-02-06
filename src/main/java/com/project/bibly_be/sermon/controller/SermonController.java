@@ -114,5 +114,17 @@ public class SermonController {
         return sermonService.searchSermons(keyword, userId, searchIn);
     }
 
+    @Operation(summary = "필터링된 설교 목록 가져오기", description = "정렬, 예배 유형, 작성자, 날짜 범위를 기준으로 필터링하여 설교 목록을 반환")
+    @GetMapping("/filtered-list")
+    public List<SermonResponseDTO> getFilteredSermons(
+            @RequestParam(value = "sort", defaultValue = "desc") String sortOrder,
+            @RequestParam(value = "worshipType", defaultValue = "all") String worshipType,
+            @RequestParam(value = "author", required = false) String author,
+            @RequestParam(value = "startDate", required = false) String startDate,
+            @RequestParam(value = "endDate", required = false) String endDate
+    ) {
+        return sermonService.getFilteredSermons(sortOrder, worshipType, author, startDate, endDate);
+    }
+
 
 }

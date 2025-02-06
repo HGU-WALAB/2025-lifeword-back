@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,4 +39,20 @@ public interface SermonRepository extends JpaRepository<Sermon, Long> {
             "AND s.owner.id = :userId ORDER BY s.sermonId DESC")
 
     List<Sermon> searchBySermonTitleOrContent(@Param("keyword") String keyword, @Param("userId") UUID userId);
+
+    @Query("SELECT s FROM Sermon s WHERE LOWER(s.worshipType) = LOWER(:worshipType)")
+    List<Sermon> findByWorshipType(@Param("worshipType") String worshipType);
+
+    @Query("SELECT s FROM Sermon s WHERE " +
+            "(:worshipType IS NULL OR s.worshipType = :worshipType) " +
+            "AND (:authorId IS NULL OR s.owner.id = :authorId) " +
+            "AND (:startDate IS NULL OR s.sermonDate >= :startDate) " +
+            "AND (:endDate IS NULL OR s.sermonDate <= :endDate) " +
+            "ORDER BY s.sermonDate DESC")
+    List<Sermon> findFilteredSermons(
+            @Param("worshipType") String worshipType,
+            @Param("authorId") UUID authorId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 }
