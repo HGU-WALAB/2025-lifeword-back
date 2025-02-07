@@ -115,7 +115,8 @@ public class BookmarkService {
     public void deleteBookmark(UUID userId, Long bookmarkId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
-        bookmarkRepository.deleteByIdAndUser(bookmarkId, user);
+        Bookmark bookmark = bookmarkRepository.findById(bookmarkId).orElseThrow(() -> new IllegalStateException("Bookmark not found"));
+        if(!bookmark.getUser().getId().equals(user.getId())){throw new UsernameNotFoundException("User has no right to access this item");}
+        bookmarkRepository.deleteById(bookmarkId);
     }
 }
