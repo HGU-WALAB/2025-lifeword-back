@@ -11,6 +11,7 @@ import com.project.bibly_be.bible.repository.BibleRepository;
 import com.project.bibly_be.bookmark.repository.BookmarkRepository;
 import com.project.bibly_be.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +30,7 @@ public class BookmarkService {
 
     public BookmarkResponseDTO createBookmark(UUID userId, BookmarkRequestDTO request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         // if same sermon/ verse exist in user bookmark already
 
@@ -37,7 +38,7 @@ public class BookmarkService {
         if(request.getIsSermon()){
             // get sermon in sermon table
             Sermon sermon = sermonRepository.findById(request.getSermonId())
-                    .orElseThrow(()->new IllegalArgumentException("Sermon not found"));
+                    .orElseThrow(()->new IllegalStateException("Sermon not found"));
             // check same bookmark exist
             Bookmark exist = bookmarkRepository.findByUserAndSermon_SermonId(user, request.getSermonId());
             if(exist != null){
@@ -55,7 +56,7 @@ public class BookmarkService {
         }
         else{
             Bible verse = bibleRepository.findById(request.getVerseId())
-                    .orElseThrow(() -> new IllegalArgumentException("Verse not found"));
+                    .orElseThrow(() -> new IllegalStateException("Verse not found"));
 
             // check same bookmark exist
             Bookmark exist = bookmarkRepository.findByUserAndVerseIdx(user, request.getVerseId());
@@ -111,10 +112,10 @@ public class BookmarkService {
 
     }
 
-    public void deleteBookmark(UUID userId, Long verseId) {
+    public void deleteBookmark(UUID userId, Long bookmarkId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        bookmarkRepository.deleteByUserAndVerseIdx(user, verseId);
+        bookmarkRepository.deleteByIdAndUser(bookmarkId, user);
     }
 }

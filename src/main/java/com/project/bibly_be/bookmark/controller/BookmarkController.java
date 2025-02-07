@@ -20,8 +20,14 @@ public class BookmarkController {
     public ApiResponseDTO<BookmarkResponseDTO> createBookmark(
             @RequestParam("userID") UUID userId,  // 헤더에서 파라미터로 변경
             @RequestBody BookmarkRequestDTO request) {
-        BookmarkResponseDTO bookmark = bookmarkService.createBookmark(userId, request);
-        return ApiResponseDTO.success("북마크 생성 완료", bookmark);
+        try {
+            BookmarkResponseDTO bookmark = bookmarkService.createBookmark(userId, request);
+            return ApiResponseDTO.success("북마크 생성 완료", bookmark);
+        }
+        catch (IllegalArgumentException e) {
+            return ApiResponseDTO.success("Already bookmarked", null);
+        }
+
     }
 
 //    @GetMapping
@@ -54,11 +60,11 @@ public class BookmarkController {
 
     }
 
-    @DeleteMapping("/{verseId}")
+    @DeleteMapping("/{bookmarkId}")
     public ApiResponseDTO<Void> deleteBookmark(
             @RequestParam("userID") UUID userId,  // 헤더에서 파라미터로 변경
-            @PathVariable Long verseId) {
-        bookmarkService.deleteBookmark(userId, verseId);
+            @PathVariable Long bookmarkId) {
+        bookmarkService.deleteBookmark(userId, bookmarkId);
         return ApiResponseDTO.success("북마크 삭제 완료", null);
     }
 }

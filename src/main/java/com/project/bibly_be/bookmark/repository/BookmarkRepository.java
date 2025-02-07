@@ -16,7 +16,7 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
     Bookmark findByUserAndVerseIdx(User user, Long verseId);
 
     Bookmark findByUserAndSermon_SermonId(User user, Long sermonId);
-    void deleteByUserAndVerseIdx(User user, Long verseId);
+    void deleteByIdAndUser(Long bookmarkId, User user);
 
     @Query("SELECT b FROM Bookmark b " +
             "LEFT JOIN FETCH b.sermon s " +
