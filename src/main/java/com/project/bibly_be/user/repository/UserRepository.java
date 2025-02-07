@@ -15,6 +15,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     Optional<User> findUsersByEmailAndOauthProvider(String email, String oauthProvider);
 
+    Optional<User> findByName(String name);
+
+
 
     // 관리자용 메서드
     Page<User> findAll(Pageable pageable); // 전체 사용자 페이징 조회

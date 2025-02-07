@@ -10,10 +10,13 @@ import com.project.bibly_be.sermon.repository.SermonRepository;
 import com.project.bibly_be.user.entity.User;
 import com.project.bibly_be.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Comparator;
@@ -234,34 +237,77 @@ public class SermonService {
         sermonRepository.delete(sermon);
     }
 
-    public List<SermonResponseDTO> searchSermons(String keyword, String userId, String searchIn) {
-        UUID userUUID = UUID.fromString(userId);
-
+    public List<SermonResponseDTO> searchSermons(String keyword) {
         List<Sermon> results;
-        switch (searchIn.toLowerCase()) {
-            case "title":
-                results = sermonRepository.searchBySermonTitle(keyword, userUUID);
-                break;
-            case "content":
-                results = sermonRepository.searchBySermonTitleOrContent(keyword, userUUID)
-                        .stream()
-                        .filter(sermon -> sermon.getContents().stream()
-                                .anyMatch(content -> content.getContentText().toLowerCase().contains(keyword.toLowerCase())))
-                        .collect(Collectors.toList());
-                break;
-            case "both":
-            default:
-                results = sermonRepository.searchBySermonTitleOrContent(keyword, userUUID);
-                break;
+
+        // 작성자로 검색 (최우선)
+        results = sermonRepository.searchByAuthorName(keyword);
+        if (!results.isEmpty()) {
+            return results.stream()
+                    .map(this::mapToSermonResponseDTO)
+                    .distinct()
+                    .collect(Collectors.toList());
         }
 
-        // Sort Sermon entities by sermonId descending
-        results.sort(Comparator.comparingLong(Sermon::getSermonId).reversed());
+        // 제목으로 검색 (작성자가 없을 경우)
+        results = sermonRepository.searchBySermonTitle(keyword);
+        if (!results.isEmpty()) {
+            return results.stream()
+                    .map(this::mapToSermonResponseDTO)
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
 
-        // Map sorted Sermons to SermonResponseDTOs
+        // 본문 내용으로 검색 (작성자 & 제목이 없을 경우)
+        results = sermonRepository.searchBySermonTitleOrContent(keyword);
+
         return results.stream()
                 .map(this::mapToSermonResponseDTO)
                 .distinct()
+                .collect(Collectors.toList());
+    }
+
+
+    public List<SermonResponseDTO> getFilteredSermons(String sortOrder, String worshipType,  String startDate, String endDate, String scripture) {
+        LocalDateTime start = null;
+        LocalDateTime end = null;
+
+
+        // 날짜 범위 처리
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        if (startDate != null && !startDate.isEmpty()) {
+            start = LocalDate.parse(startDate, formatter).atStartOfDay();
+        }
+        if (endDate != null && !endDate.isEmpty()) {
+            end = LocalDate.parse(endDate, formatter).atTime(23, 59, 59);
+        }
+
+        // Repository에서 바로 필터링하여 가져오기
+        List<Sermon> sermons = sermonRepository.findFilteredSermons(
+                "all".equalsIgnoreCase(worshipType) ? null : worshipType, start, end, scripture
+        );
+
+        // 검색 결과가 없으면 404 반환
+        if (sermons.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "필터링된 설교가 없습니다.");
+        }
+
+        // 설교 최신순 / 오래된 순 정렬
+        switch (sortOrder != null ? sortOrder.toLowerCase() : "") {
+            case "asc":
+                sermons.sort(Comparator.comparing(Sermon::getSermonDate));
+                break;
+            case "recent":
+                sermons.sort(Comparator.comparing(Sermon::getUpdatedAt).reversed());
+                break;
+            case "desc":
+            default:
+                sermons.sort(Comparator.comparing(Sermon::getSermonDate).reversed());
+                break;
+        }
+
+        return sermons.stream()
+                .map(this::mapToSermonResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -297,6 +343,8 @@ public class SermonService {
                 .contents(contents)
                 .build();
     }
+
+
 
 
 }
