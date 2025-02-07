@@ -106,12 +106,10 @@ public class SermonController {
         sermonService.deleteSermon(sermonId, loggedInUserId);
     }
 
-    @Operation(summary = "설교 SEARCH ! 케이스 3개로 나눴어요 ~ ( SearchSermon ) ", description = " searchin = 에서 title == keyword이 제목에만 있는 설교 불러오기, content == 본문에 keyword가 있는 설교들 불러오기, both == 제목 본문 둘다~ ")
+    @Operation(summary = "설교 목록 검색 (자동 우선순위 적용)", description = "1. 작성자 검색 → 2. 제목 검색 → 3. 본문 검색")
     @GetMapping("/search")
-    public List<SermonResponseDTO> searchSermons(@RequestParam("keyword") String keyword,
-                                                 @RequestParam("userId") String userId,
-                                                 @RequestParam(value = "searchIn", defaultValue = "both") String searchIn) {
-        return sermonService.searchSermons(keyword, userId, searchIn);
+    public List<SermonResponseDTO> searchSermons(@RequestParam("keyword") String keyword) {
+        return sermonService.searchSermons(keyword);
     }
 
     @Operation(summary = "필터링된 설교 목록 가져오기", description = "정렬, 예배 유형, 작성자(이름으로), 날짜 범위를 기준으로 필터링하여 설교 목록을 반환")
@@ -119,11 +117,10 @@ public class SermonController {
     public List<SermonResponseDTO> getFilteredSermons(
             @RequestParam(value = "sort", defaultValue = "desc") String sortOrder,
             @RequestParam(value = "worshipType", defaultValue = "all") String worshipType,
-            @RequestParam(value = "author", required = false) String author,
             @RequestParam(value = "startDate", required = false) String startDate,
             @RequestParam(value = "endDate", required = false) String endDate
     ) {
-        return sermonService.getFilteredSermons(sortOrder, worshipType, author, startDate, endDate);
+        return sermonService.getFilteredSermons(sortOrder, worshipType, startDate, endDate);
     }
 
 }
