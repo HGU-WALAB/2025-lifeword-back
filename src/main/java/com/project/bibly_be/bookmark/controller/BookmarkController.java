@@ -20,10 +20,23 @@ public class BookmarkController {
     public ApiResponseDTO<BookmarkResponseDTO> createBookmark(
             @RequestParam("userID") UUID userId,  // 헤더에서 파라미터로 변경
             @RequestBody BookmarkRequestDTO request) {
-        BookmarkResponseDTO bookmark = bookmarkService.createBookmark(userId, request);
-        return ApiResponseDTO.success("북마크 생성 완료", bookmark);
+        try {
+            BookmarkResponseDTO bookmark = bookmarkService.createBookmark(userId, request);
+            return ApiResponseDTO.success("북마크 생성 완료", bookmark);
+        }
+        catch (IllegalArgumentException e) {
+            return ApiResponseDTO.success("Already bookmarked", null);
+        }
+
     }
 
+//    @GetMapping
+//    public ApiResponseDTO<List<BookmarkResponseDTO>> getBookmarks(
+//            @RequestParam("userID") UUID userId) {  // 헤더에서 파라미터로 변경
+//        List<BookmarkResponseDTO> bookmarks = bookmarkService.getBookmarks(userId);
+//        return ApiResponseDTO.success("북마크 목록 조회 완료", bookmarks);
+//    }
+//
     @GetMapping
     public ApiResponseDTO<List<BookmarkResponseDTO>> getBookmarks(
             @RequestParam("userID") UUID userId) {  // 헤더에서 파라미터로 변경
@@ -31,11 +44,27 @@ public class BookmarkController {
         return ApiResponseDTO.success("북마크 목록 조회 완료", bookmarks);
     }
 
-    @DeleteMapping("/{verseId}")
+    @GetMapping("/sermon")
+    public ApiResponseDTO<List<BookmarkResponseDTO>> getSermonBookmarks(
+            @RequestParam("userID") UUID userId){
+        List<BookmarkResponseDTO> bookmarks = bookmarkService.getUserBookmarksSermon(userId);
+        return ApiResponseDTO.success("북마크 설교 목록 조회 완료", bookmarks);
+
+    }
+
+    @GetMapping("/verse")
+    public ApiResponseDTO<List<BookmarkResponseDTO>> getVerseBookmarks(
+            @RequestParam("userID") UUID userId){
+        List<BookmarkResponseDTO> bookmarks = bookmarkService.getUserBookmarksVerse(userId);
+        return ApiResponseDTO.success("북마크 구절 목록 조회 완료", bookmarks);
+
+    }
+
+    @DeleteMapping("/{bookmarkId}")
     public ApiResponseDTO<Void> deleteBookmark(
             @RequestParam("userID") UUID userId,  // 헤더에서 파라미터로 변경
-            @PathVariable Long verseId) {
-        bookmarkService.deleteBookmark(userId, verseId);
+            @PathVariable Long bookmarkId) {
+        bookmarkService.deleteBookmark(userId, bookmarkId);
         return ApiResponseDTO.success("북마크 삭제 완료", null);
     }
 }
