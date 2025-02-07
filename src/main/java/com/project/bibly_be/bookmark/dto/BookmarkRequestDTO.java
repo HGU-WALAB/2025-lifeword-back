@@ -7,4 +7,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class BookmarkRequestDTO {
     private Long verseId;
+    private Long sermonId;
+    private Boolean isSermon;
 }
