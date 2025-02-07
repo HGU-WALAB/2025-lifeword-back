@@ -267,6 +267,55 @@ public class SermonService {
     }
 
 
+    public List<SermonResponseDTO> getFilteredSermons(String sortOrder, String worshipType, String author, String startDate, String endDate) {
+        UUID authorId = null;
+        LocalDateTime start = null;
+        LocalDateTime end = null;
+
+        //작성자(author) 처리
+        if (author != null && !author.trim().isEmpty()) {
+            User user = userRepository.findByName(author)
+                    .orElse(null);
+            if (user != null) {
+                authorId = user.getId();
+            }
+        }
+
+        // 날짜 범위 처리
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        if (startDate != null && !startDate.isEmpty()) {
+            start = LocalDate.parse(startDate, formatter).atStartOfDay();
+        }
+        if (endDate != null && !endDate.isEmpty()) {
+            end = LocalDate.parse(endDate, formatter).atTime(23, 59, 59);
+        }
+
+        // Repository에서 바로 필터링하여 가져오기
+        List<Sermon> sermons = sermonRepository.findFilteredSermons(
+                "all".equalsIgnoreCase(worshipType) ? null : worshipType, authorId, start, end
+        );
+
+
+        // 설교 최신순 / 오래된 순 정렬
+        switch (sortOrder != null ? sortOrder.toLowerCase() : "") {
+            case "asc":
+                sermons.sort(Comparator.comparing(Sermon::getSermonDate));
+                break;
+            case "recent":
+                sermons.sort(Comparator.comparing(Sermon::getUpdatedAt).reversed());
+                break;
+            case "desc":
+            default:
+                sermons.sort(Comparator.comparing(Sermon::getSermonDate).reversed());
+                break;
+        }
+
+        return sermons.stream()
+                .map(this::mapToSermonResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+
     // Utility to map Sermon to SermonResponseDTO
     private SermonResponseDTO mapToSermonResponseDTO(Sermon sermon) {
         List<ContentDTO> contents = sermon.getContents() != null
@@ -297,50 +346,6 @@ public class SermonService {
                 .fileCode(sermon.getFileCode())
                 .contents(contents)
                 .build();
-    }
-
-
-    public List<SermonResponseDTO> getFilteredSermons(String sortOrder, String worshipType, String author, String startDate, String endDate) {
-        UUID authorId = null;
-        LocalDateTime start = null;
-        LocalDateTime end = null;
-
-        //작성자(author) 처리
-        if (author != null && !author.trim().isEmpty()) {
-            User user = userRepository.findByName(author)
-                    .orElse(null);
-            if (user != null) {
-                authorId = user.getId();
-            }
-        }
-
-        // 날짜 범위 처리
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        if (startDate != null && !startDate.isEmpty()) {
-            start = LocalDate.parse(startDate, formatter).atStartOfDay();
-        }
-        if (endDate != null && !endDate.isEmpty()) {
-            end = LocalDate.parse(endDate, formatter).atTime(23, 59, 59);
-        }
-
-        // Repository에서 바로 필터링하여 가져오기
-        List<Sermon> sermons = sermonRepository.findFilteredSermons(
-                "all".equalsIgnoreCase(worshipType) ? null : worshipType,
-                authorId,
-                start,
-                end
-        );
-
-        // 최신순 / 오래된 순 정렬
-        if ("asc".equalsIgnoreCase(sortOrder)) {
-            sermons.sort(Comparator.comparing(Sermon::getSermonDate));
-        } else {
-            sermons.sort(Comparator.comparing(Sermon::getSermonDate).reversed());
-        }
-
-        return sermons.stream()
-                .map(this::mapToSermonResponseDTO)
-                .collect(Collectors.toList());
     }
 
 
