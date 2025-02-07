@@ -27,7 +27,7 @@ public interface SermonRepository extends JpaRepository<Sermon, Long> {
     @Query("SELECT s FROM Sermon s JOIN FETCH s.owner")
     List<Sermon> findAllWithOwner();
 
-    // 🔹 작성자(User) 이름으로 설교 검색 (새로운 쿼리)
+    // 작성자(User) 이름으로 설교 검색 (새로운 쿼리)
     @Query("SELECT s FROM Sermon s WHERE LOWER(s.owner.name) LIKE LOWER(CONCAT('%', :keyword, '%')) ORDER BY s.sermonId DESC")
     List<Sermon> searchByAuthorName(@Param("keyword") String keyword);
 
@@ -58,10 +58,13 @@ public interface SermonRepository extends JpaRepository<Sermon, Long> {
             "(:worshipType IS NULL OR s.worshipType = :worshipType) " +
             "AND (:startDate IS NULL OR s.sermonDate >= :startDate) " +
             "AND (:endDate IS NULL OR s.sermonDate <= :endDate) " +
+            "AND (:scripture IS NULL OR LOWER(s.mainScripture) LIKE LOWER(CONCAT('%', :scripture, '%')) " +
+            "OR LOWER(s.additionalScripture) LIKE LOWER(CONCAT('%', :scripture, '%'))) " +
             "ORDER BY s.sermonDate DESC")
     List<Sermon> findFilteredSermons(
             @Param("worshipType") String worshipType,
             @Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate
+            @Param("endDate") LocalDateTime endDate,
+            @Param("scripture") String scripture
     );
 }

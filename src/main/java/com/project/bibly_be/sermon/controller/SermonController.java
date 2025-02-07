@@ -118,9 +118,10 @@ public class SermonController {
             @RequestParam(value = "sort", defaultValue = "desc") String sortOrder,
             @RequestParam(value = "worshipType", defaultValue = "all") String worshipType,
             @RequestParam(value = "startDate", required = false) String startDate,
-            @RequestParam(value = "endDate", required = false) String endDate
+            @RequestParam(value = "endDate", required = false) String endDate,
+            @RequestParam(value = "scripture", required = false) String scripture
     ) {
-        return sermonService.getFilteredSermons(sortOrder, worshipType, startDate, endDate);
+        return sermonService.getFilteredSermons(sortOrder, worshipType, startDate, endDate,scripture);
     }
 
 }

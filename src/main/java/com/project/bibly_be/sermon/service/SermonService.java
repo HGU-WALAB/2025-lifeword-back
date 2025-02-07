@@ -10,8 +10,10 @@ import com.project.bibly_be.sermon.repository.SermonRepository;
 import com.project.bibly_be.user.entity.User;
 import com.project.bibly_be.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -238,7 +240,7 @@ public class SermonService {
     public List<SermonResponseDTO> searchSermons(String keyword) {
         List<Sermon> results;
 
-        // 1️⃣ 🔹 작성자로 검색 (최우선)
+        // 작성자로 검색 (최우선)
         results = sermonRepository.searchByAuthorName(keyword);
         if (!results.isEmpty()) {
             return results.stream()
@@ -247,7 +249,7 @@ public class SermonService {
                     .collect(Collectors.toList());
         }
 
-        // 2️⃣ 🔹 제목으로 검색 (작성자가 없을 경우)
+        // 제목으로 검색 (작성자가 없을 경우)
         results = sermonRepository.searchBySermonTitle(keyword);
         if (!results.isEmpty()) {
             return results.stream()
@@ -256,7 +258,7 @@ public class SermonService {
                     .collect(Collectors.toList());
         }
 
-        // 3️⃣ 🔹 본문 내용으로 검색 (작성자 & 제목이 없을 경우)
+        // 본문 내용으로 검색 (작성자 & 제목이 없을 경우)
         results = sermonRepository.searchBySermonTitleOrContent(keyword);
 
         return results.stream()
@@ -266,7 +268,7 @@ public class SermonService {
     }
 
 
-    public List<SermonResponseDTO> getFilteredSermons(String sortOrder, String worshipType,  String startDate, String endDate) {
+    public List<SermonResponseDTO> getFilteredSermons(String sortOrder, String worshipType,  String startDate, String endDate, String scripture) {
         LocalDateTime start = null;
         LocalDateTime end = null;
 
@@ -282,9 +284,13 @@ public class SermonService {
 
         // Repository에서 바로 필터링하여 가져오기
         List<Sermon> sermons = sermonRepository.findFilteredSermons(
-                "all".equalsIgnoreCase(worshipType) ? null : worshipType, start, end
+                "all".equalsIgnoreCase(worshipType) ? null : worshipType, start, end, scripture
         );
 
+        // 검색 결과가 없으면 404 반환
+        if (sermons.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "필터링된 설교가 없습니다.");
+        }
 
         // 설교 최신순 / 오래된 순 정렬
         switch (sortOrder != null ? sortOrder.toLowerCase() : "") {
