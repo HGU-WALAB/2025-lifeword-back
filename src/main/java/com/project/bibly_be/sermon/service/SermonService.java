@@ -8,6 +8,7 @@ import com.project.bibly_be.sermon.entity.Content;
 import com.project.bibly_be.sermon.entity.Sermon;
 import com.project.bibly_be.sermon.repository.ContentRepository;
 import com.project.bibly_be.sermon.repository.SermonRepository;
+import com.project.bibly_be.sermon.specification.SermonSpecification;
 import com.project.bibly_be.user.entity.User;
 import com.project.bibly_be.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -413,6 +415,34 @@ public class SermonService {
         }
     }
 
+    // JPA specification
+
+    public SermonResponsePageDTO searchSermonFilterUser(String keyword,UUID userId,String sortOrder, List<String> worshipTypes,  String startDate, String endDate, List<String> scriptures, int page, int size, int mode){
+
+        Pageable pageable = PageRequest.of(page-1, size, getSort(sortOrder)); // case asc, desc, recent <-- default is recent
+        LocalDateTime start = null;
+        LocalDateTime end = null;
+
+
+        // 날짜 범위 처리
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        if (startDate != null && !startDate.isEmpty()) {
+            start = LocalDate.parse(startDate, formatter).atStartOfDay();
+        }
+        if (endDate != null && !endDate.isEmpty()) {
+            end = LocalDate.parse(endDate, formatter).atTime(23, 59, 59);
+        }
+        //worshipTypes.set(0, "all".equalsIgnoreCase(worshipTypes.get(0)) ? null : worshipTypes.get(0));
+        Specification<Sermon> spec = SermonSpecification.withFilters(userId,keyword,worshipTypes,start,end,scriptures,mode);
+
+        Page<Sermon> result = sermonRepository.findAll(spec, pageable);
+
+        return SermonResponsePageDTO.fromPage(result.map(this::mapToSermonResponseDTO));
+
+
+    }
+
+
     //admin
     public SermonResponsePageDTO searchSermonsFiltered(String keyword,String sortOrder, String worshipType,  String startDate, String endDate, String scripture, int page, int size) {
         //Pageable pageable =  PageRequest.of(page - 1, size);
@@ -432,10 +462,10 @@ public class SermonService {
 
         // Repository에서 바로 필터링하여 가져오기
         worshipType = "all".equalsIgnoreCase(worshipType) ? null : worshipType;
-        Page<Sermon> sermons = sermonRepository.findFilteredSermonsPage(
-                "all".equalsIgnoreCase(worshipType) ? null : worshipType, start, end, scripture,keyword,pageable
-        );
-        //Page<Sermon> sermons = sermonRepository.findFilteredSermonsPage();
+//        Page<Sermon> sermons = sermonRepository.findFilteredSermonsPage(
+//                "all".equalsIgnoreCase(worshipType) ? null : worshipType, start, end, scripture,keyword,pageable
+//        );
+        Page<Sermon> sermons = sermonRepository.findFilteredSermonsPage(worshipType,start, end, scripture,keyword, pageable);
 
 //        // 검색 결과가 없으면 404 반환
 //        if (sermons.isEmpty()) {

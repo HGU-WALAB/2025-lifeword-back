@@ -3,6 +3,7 @@ package com.project.bibly_be.sermon.repository;
 import com.project.bibly_be.sermon.entity.Sermon;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -13,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface SermonRepository extends JpaRepository<Sermon, Long> {
+public interface SermonRepository extends JpaRepository<Sermon, Long>, JpaSpecificationExecutor<Sermon> {
 
     List<Sermon> findByIsPublicTrue();
 
@@ -88,7 +89,6 @@ public interface SermonRepository extends JpaRepository<Sermon, Long> {
             @Param("endDate") LocalDateTime endDate,
             @Param("scripture") String scripture,
             @Param("keyword") String keyword,
-
             Pageable pageable
     );
 
