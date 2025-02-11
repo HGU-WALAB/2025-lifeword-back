@@ -352,7 +352,7 @@ public class SermonService {
                 .build();
     }
 
-    public SermonResponsePageDTO searchSermonsFilteredUser(UUID userId,String sortOrder, String worshipType,  String startDate, String endDate, String scripture, int page, int size, int mode) {
+    public SermonResponsePageDTO searchSermonsFilteredUser(String keyword,UUID userId,String sortOrder, String worshipType,  String startDate, String endDate, String scripture, int page, int size, int mode) {
 
         Pageable pageable = PageRequest.of(page-1, size, getSort(sortOrder)); // case asc, desc, recent <-- default is recent
         LocalDateTime start = null;
@@ -374,20 +374,20 @@ public class SermonService {
         Page<Sermon> result;
         switch (mode) {
             case 0: // 공개
-                result = sermonRepository.findPublicSermons(worshipType, start, end, scripture, pageable);
+                result = sermonRepository.findPublicSermonsWithKeyword(keyword,worshipType, start, end, scripture, pageable);
                 break;
 
             case 1: // 내 설교
-                result = sermonRepository.findUserSermons(userId, worshipType, start, end, scripture,pageable);
+                result = sermonRepository.findUserSermonsWithKeyword(keyword ,userId, worshipType, start, end, scripture,pageable);
 
                 break;
 
             case 2: // 공개 + 내 설교 (AND 버전)
-                result = sermonRepository.findPublicUserSermons(userId, worshipType, start, end, scripture, pageable);
+                result = sermonRepository.findPublicUserSermonsWithKeyword(keyword,userId, worshipType, start, end, scripture, pageable);
                 break;
 
             case 3: // 비공개 + 내 설교
-                result = sermonRepository.findPrivateUserSermons(userId, worshipType, start, end, scripture, pageable);
+                result = sermonRepository.findPrivateUserSermonsWithKeyword(keyword,userId, worshipType, start, end, scripture, pageable);
                 break;
 
             default:
@@ -414,8 +414,9 @@ public class SermonService {
     }
 
     //admin
-    public SermonResponsePageDTO searchSermonsFiltered(String sortOrder, String worshipType,  String startDate, String endDate, String scripture, int page, int size) {
-        Pageable pageable =  PageRequest.of(page - 1, size);
+    public SermonResponsePageDTO searchSermonsFiltered(String keyword,String sortOrder, String worshipType,  String startDate, String endDate, String scripture, int page, int size) {
+        //Pageable pageable =  PageRequest.of(page - 1, size);
+        Pageable pageable = PageRequest.of(page-1, size, getSort(sortOrder));
         LocalDateTime start = null;
         LocalDateTime end = null;
 
@@ -430,9 +431,11 @@ public class SermonService {
         }
 
         // Repository에서 바로 필터링하여 가져오기
+        worshipType = "all".equalsIgnoreCase(worshipType) ? null : worshipType;
         Page<Sermon> sermons = sermonRepository.findFilteredSermonsPage(
-                "all".equalsIgnoreCase(worshipType) ? null : worshipType, start, end, scripture,sortOrder, pageable
+                "all".equalsIgnoreCase(worshipType) ? null : worshipType, start, end, scripture,keyword,pageable
         );
+        //Page<Sermon> sermons = sermonRepository.findFilteredSermonsPage();
 
 //        // 검색 결과가 없으면 404 반환
 //        if (sermons.isEmpty()) {
