@@ -3,6 +3,7 @@ package com.project.bibly_be.sermon.service;
 import com.project.bibly_be.sermon.dto.ContentDTO;
 import com.project.bibly_be.sermon.dto.SermonRequestDTO;
 import com.project.bibly_be.sermon.dto.SermonResponseDTO;
+import com.project.bibly_be.sermon.dto.SermonResponsePageDTO;
 import com.project.bibly_be.sermon.entity.Content;
 import com.project.bibly_be.sermon.entity.Sermon;
 import com.project.bibly_be.sermon.repository.ContentRepository;
@@ -10,10 +11,16 @@ import com.project.bibly_be.sermon.repository.SermonRepository;
 import com.project.bibly_be.user.entity.User;
 import com.project.bibly_be.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.ReturnTypeParser;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -31,6 +38,7 @@ public class SermonService {
     private final SermonRepository sermonRepository;
     private final ContentRepository contentRepository;
     private final UserRepository userRepository;
+    private final ReturnTypeParser returnTypeParser;
 
     public SermonResponseDTO createSermon(SermonRequestDTO requestDTO) {
         // FETCH user
@@ -344,7 +352,97 @@ public class SermonService {
                 .build();
     }
 
+    public SermonResponsePageDTO searchSermonsFilteredUser(String keyword,UUID userId,String sortOrder, String worshipType,  String startDate, String endDate, String scripture, int page, int size, int mode) {
 
+        Pageable pageable = PageRequest.of(page-1, size, getSort(sortOrder)); // case asc, desc, recent <-- default is recent
+        LocalDateTime start = null;
+        LocalDateTime end = null;
+
+
+        // 날짜 범위 처리
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        if (startDate != null && !startDate.isEmpty()) {
+            start = LocalDate.parse(startDate, formatter).atStartOfDay();
+        }
+        if (endDate != null && !endDate.isEmpty()) {
+            end = LocalDate.parse(endDate, formatter).atTime(23, 59, 59);
+        }
+
+        worshipType = "all".equalsIgnoreCase(worshipType) ? null : worshipType; //this is shit important
+
+        // 모드별로 다른 쿼리 호출
+        Page<Sermon> result;
+        switch (mode) {
+            case 0: // 공개
+                result = sermonRepository.findPublicSermonsWithKeyword(keyword,worshipType, start, end, scripture, pageable);
+                break;
+
+            case 1: // 내 설교
+                result = sermonRepository.findUserSermonsWithKeyword(keyword ,userId, worshipType, start, end, scripture,pageable);
+
+                break;
+
+            case 2: // 공개 + 내 설교 (AND 버전)
+                result = sermonRepository.findPublicUserSermonsWithKeyword(keyword,userId, worshipType, start, end, scripture, pageable);
+                break;
+
+            case 3: // 비공개 + 내 설교
+                result = sermonRepository.findPrivateUserSermonsWithKeyword(keyword,userId, worshipType, start, end, scripture, pageable);
+                break;
+
+            default:
+                throw new IllegalArgumentException("Invalid mode: " + mode);
+        }
+
+//        // 검색 결과가 없으면 404 반환
+//        if (result.isEmpty()) {
+//            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "필터링된 설교가 없습니다.");
+//        }
+        return SermonResponsePageDTO.fromPage(result.map(this::mapToSermonResponseDTO));
+    }
+
+    private Sort getSort(String sortOrder) {
+        switch (sortOrder != null ? sortOrder.toLowerCase() : "desc") {
+            case "asc":
+                return Sort.by(Sort.Direction.ASC, "sermonDate");
+            case "recent":
+                return Sort.by(Sort.Direction.DESC, "updatedAt");
+            case "desc":
+            default:
+                return Sort.by(Sort.Direction.DESC, "sermonDate");
+        }
+    }
+
+    //admin
+    public SermonResponsePageDTO searchSermonsFiltered(String keyword,String sortOrder, String worshipType,  String startDate, String endDate, String scripture, int page, int size) {
+        //Pageable pageable =  PageRequest.of(page - 1, size);
+        Pageable pageable = PageRequest.of(page-1, size, getSort(sortOrder));
+        LocalDateTime start = null;
+        LocalDateTime end = null;
+
+
+        // 날짜 범위 처리
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        if (startDate != null && !startDate.isEmpty()) {
+            start = LocalDate.parse(startDate, formatter).atStartOfDay();
+        }
+        if (endDate != null && !endDate.isEmpty()) {
+            end = LocalDate.parse(endDate, formatter).atTime(23, 59, 59);
+        }
+
+        // Repository에서 바로 필터링하여 가져오기
+        worshipType = "all".equalsIgnoreCase(worshipType) ? null : worshipType;
+        Page<Sermon> sermons = sermonRepository.findFilteredSermonsPage(
+                "all".equalsIgnoreCase(worshipType) ? null : worshipType, start, end, scripture,keyword,pageable
+        );
+        //Page<Sermon> sermons = sermonRepository.findFilteredSermonsPage();
+
+//        // 검색 결과가 없으면 404 반환
+//        if (sermons.isEmpty()) {
+//            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "필터링된 설교가 없습니다.");
+//        }
+        return SermonResponsePageDTO.fromPage(sermons.map(this::mapToSermonResponseDTO));
+    }
 
 
 }
