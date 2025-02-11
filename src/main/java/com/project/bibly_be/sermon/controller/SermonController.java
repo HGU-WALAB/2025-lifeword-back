@@ -129,7 +129,7 @@ public class SermonController {
 //    }
 
     @Operation(summary = "필터링 설교 목록 User Page", description = "page 는 1 부터 시작 , keyword (null 은 모든 검색) 1. 작성자 검색 → 2. 제목 검색 → 3. 본문 검색 \n" +
-            "//유저아이디 (UUID) 필수 , 정렬( desc = 최신순 (default), asc =  오래된순 , recent =  최근 수정), 예배 유형(default = all),\n" +
+            "//유저아이디 (UUID) 필수 , 정렬( desc = 최신순 (default), asc =  오래된순 , recent =  최근 수정), 예배 유형(default = null (empty)),\n" +
             " page 페이지 오프셋 , size 한 페이지에 들어갈 설교 수, 모드 (0 = 공개 설교 (default) , 1 = 내 전체 설교, 2 = 내 공개 설교, 3 = 내 비공개 설교) \n" +
             "// page = 1, size = 10 (default)       날짜 범위를 기준으로 필터링하여 설교 목록을 반환.totalPage = 총 페이지수 반환")
     @GetMapping("/filtered-list-user")
@@ -137,15 +137,15 @@ public class SermonController {
             @RequestParam(value = "keyword",required = false) String keyword,
             @RequestParam(value = "user_id", required = true) UUID userId,
             @RequestParam(value = "sort", defaultValue = "desc") String sortOrder,
-            @RequestParam(value = "worshipType", defaultValue = "all") String worshipType,
+            @RequestParam(value = "worshipType", required = false) List<String> worshipType,
             @RequestParam(value = "startDate", required = false) String startDate,
             @RequestParam(value = "endDate", required = false) String endDate,
-            @RequestParam(value = "scripture", required = false) String scripture,
+            @RequestParam(value = "scripture", required = false) List<String> scripture,
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "mode", defaultValue = "0") int mode
     ) {
-        return sermonService.searchSermonsFilteredUser(keyword,userId,sortOrder, worshipType, startDate, endDate,scripture,page, size,mode);
+        return sermonService.searchSermonFilterUser(keyword,userId,sortOrder, worshipType, startDate, endDate,scripture,page, size,mode);
     }
 
 
