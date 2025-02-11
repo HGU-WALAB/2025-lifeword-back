@@ -2,17 +2,21 @@ package com.project.bibly_be.sermon.controller;
 
 import com.project.bibly_be.sermon.dto.SermonRequestDTO;
 import com.project.bibly_be.sermon.dto.SermonResponseDTO;
+import com.project.bibly_be.sermon.dto.SermonResponsePageDTO;
 import com.project.bibly_be.sermon.service.SermonService;
 import com.project.bibly_be.user.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/sermons")
@@ -122,6 +126,45 @@ public class SermonController {
             @RequestParam(value = "scripture", required = false) String scripture
     ) {
         return sermonService.getFilteredSermons(sortOrder, worshipType, startDate, endDate,scripture);
+    }
+
+    @Operation(summary = "필터링 설교 목록 User Page", description = "page 는 1 부터 시작 \n" +
+            "//유저아이디 (UUID) 필수 , 정렬( desc = 최신순 (default), asc =  오래된순 , recent =  최근 수정), 예배 유형(default = all),\n" +
+            " page 페이지 오프셋 , size 한 페이지에 들어갈 설교 수, 모드 (0 = 공개 설교 (default) , 1 = 내 전체 설교, 2 = 내 공개 설교, 3 = 내 비공개 설교) \n" +
+            "// 날짜 범위를 기준으로 필터링하여 설교 목록을 반환.totalPage = 총 페이지수 반환")
+    @GetMapping("/filtered-list-user")
+    public SermonResponsePageDTO getFilteredSermonsPage(
+            @RequestParam(value = "user_id", required = true) UUID userId,
+            @RequestParam(value = "sort", defaultValue = "desc") String sortOrder,
+            @RequestParam(value = "worshipType", defaultValue = "all") String worshipType,
+            @RequestParam(value = "startDate", required = false) String startDate,
+            @RequestParam(value = "endDate", required = false) String endDate,
+            @RequestParam(value = "scripture", required = false) String scripture,
+            @RequestParam(value = "page", required = true) int page,
+            @RequestParam(value = "size", required = true) int size,
+            @RequestParam(value = "mode", defaultValue = "0") int mode
+    ) {
+        return sermonService.searchSermonsFilteredUser(userId,sortOrder, worshipType, startDate, endDate,scripture,page, size,mode);
+    }
+
+
+
+    @Operation(summary = "필터링 설교 목록 관리자용 Page", description = "page 는 1 부터 시작 " +
+            "//정렬( desc = 최신순 , asc =  오래된순(default) , recent =  최근 수정) \n" +
+            " 예배 유형( all (default)),\n" +
+            "page 페이지 오프셋 , size 한 페이지에 들어갈 설교 수\n" +
+            "  날짜 범위를 기준으로 필터링하여 설교 목록을 반환. totalPage = 총 페이지수 반환")
+    @GetMapping("/filtered-list-admin")
+    public SermonResponsePageDTO getFilteredSermonsPage(
+            @RequestParam(value = "sort", defaultValue = "recent") String sortOrder,
+            @RequestParam(value = "worshipType", defaultValue = "desc") String worshipType,
+            @RequestParam(value = "startDate", required = false) String startDate,
+            @RequestParam(value = "endDate", required = false) String endDate,
+            @RequestParam(value = "scripture", required = false) String scripture,
+            @RequestParam(value = "page", required = true) int page,
+            @RequestParam(value = "size", required = true) int size
+    ) {
+        return sermonService.searchSermonsFiltered(sortOrder, worshipType, startDate, endDate,scripture,page, size);
     }
 
 }

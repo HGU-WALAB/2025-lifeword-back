@@ -1,10 +1,12 @@
 package com.project.bibly_be.sermon.repository;
 
 import com.project.bibly_be.sermon.entity.Sermon;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -67,4 +69,138 @@ public interface SermonRepository extends JpaRepository<Sermon, Long> {
             @Param("endDate") LocalDateTime endDate,
             @Param("scripture") String scripture
     );
+
+    @Query("SELECT s FROM Sermon s WHERE " +
+            "(:worshipType IS NULL OR s.worshipType = :worshipType) " +
+            "AND (:startDate IS NULL OR s.sermonDate >= :startDate) " +
+            "AND (:endDate IS NULL OR s.sermonDate <= :endDate) " +
+            "AND (:scripture IS NULL OR LOWER(s.mainScripture) LIKE LOWER(CONCAT('%', :scripture, '%')) " +
+            "OR LOWER(s.additionalScripture) LIKE LOWER(CONCAT('%', :scripture, '%'))) " +
+            "ORDER BY " +
+            "CASE WHEN :sortOrder = 'asc' THEN s.sermonDate END ASC, " +
+            "CASE WHEN :sortOrder = 'desc' THEN s.sermonDate END DESC, " +
+            "CASE WHEN :sortOrder = 'recent' THEN s.updatedAt END DESC")
+    Page<Sermon> findFilteredSermonsPage(
+            @Param("worshipType") String worshipType,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("scripture") String scripture,
+            @Param("sortOrder") String sortOrder,
+            Pageable pageable
+    );
+
+    @Query("SELECT s FROM Sermon s WHERE " +
+            "(:worshipType IS NULL OR s.worshipType = :worshipType) " +
+            "AND (:startDate IS NULL OR s.sermonDate >= :startDate) " +
+            "AND (:endDate IS NULL OR s.sermonDate <= :endDate) " +
+            "AND (:scripture IS NULL OR " +
+            "    (LOWER(s.mainScripture) LIKE LOWER(CONCAT('%', :scripture, '%')) " +
+            "     OR LOWER(s.additionalScripture) LIKE LOWER(CONCAT('%', :scripture, '%')))) " +
+            "AND (" +
+            "    (:mode = 0 AND s.isPublic = true) " +
+            " OR (:mode = 1 AND s.owner.id = :userId) " +
+            " OR (:mode = 2 AND ( s.owner.id = :userId AND s.isPublic = true)) " +
+            " OR (:mode = 3 AND (s.owner.id = :userId AND s.isPublic = false ))" +
+            ") " +
+            "ORDER BY " +
+            "CASE WHEN :sortOrder = 'asc' THEN s.sermonDate END ASC, " +
+            "CASE WHEN :sortOrder = 'desc' THEN s.sermonDate END DESC, " +
+            "CASE WHEN :sortOrder = 'recent' THEN s.updatedAt END DESC")
+    Page<Sermon> findFilteredSermonsDynamic(
+            @Param("worshipType") String worshipType,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("scripture") String scripture,
+            @Param("sortOrder") String sortOrder,
+            @Param("mode") int mode,
+            @Param("userId") UUID userId,
+            Pageable pageable
+    );
+
+    // 모드 0: 공개된 설교만
+    @Query("SELECT s FROM Sermon s " +
+            "WHERE s.isPublic = true " +
+           "AND (:worshipType IS NULL OR s.worshipType = :worshipType) " +
+            "AND (:startDate IS NULL OR s.sermonDate >= :startDate) " +
+            "AND (:endDate IS NULL OR s.sermonDate <= :endDate) " +
+            "AND (:scripture IS NULL OR " +
+            "    (LOWER(s.mainScripture) LIKE LOWER(CONCAT('%', :scripture, '%')) " +
+            "     OR LOWER(s.additionalScripture) LIKE LOWER(CONCAT('%', :scripture, '%'))))")
+    Page<Sermon> findPublicSermons(
+            @Param("worshipType") String worshipType,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("scripture") String scripture,
+            Pageable pageable
+    );
+
+
+
+    // 모드 1: 해당 사용자의 모든 설교
+    @Query("SELECT s FROM Sermon s " +
+            "WHERE s.owner.id = :userId " +
+            "AND (:worshipType IS NULL OR s.worshipType = :worshipType) " +
+            "AND (:startDate IS NULL OR s.sermonDate >= :startDate) " +
+            "AND (:endDate IS NULL OR s.sermonDate <= :endDate) " +
+            "AND (:scripture IS NULL OR " +
+            "    (LOWER(s.mainScripture) LIKE LOWER(CONCAT('%', :scripture, '%')) " +
+            "     OR LOWER(s.additionalScripture) LIKE LOWER(CONCAT('%', :scripture, '%'))))")
+
+    Page<Sermon> findUserSermons(
+            @Param("userId") UUID userId,
+            @Param("worshipType") String worshipType,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("scripture") String scripture,
+            Pageable pageable
+    );
+
+    // 모드 2: 공개 + 해당 사용자의 설교 (둘 다 만족; 실제 기획에 따라 OR 로 바꾸는지 AND 로 바꾸는지 조정)
+    @Query("SELECT s FROM Sermon s " +
+            "WHERE s.isPublic = true AND s.owner.id = :userId " +
+            "AND (:worshipType IS NULL OR s.worshipType = :worshipType) " +
+            "AND (:startDate IS NULL OR s.sermonDate >= :startDate) " +
+            "AND (:endDate IS NULL OR s.sermonDate <= :endDate) " +
+            "AND (:scripture IS NULL OR " +
+            "    (LOWER(s.mainScripture) LIKE LOWER(CONCAT('%', :scripture, '%')) " +
+            "     OR LOWER(s.additionalScripture) LIKE LOWER(CONCAT('%', :scripture, '%'))))")
+
+    Page<Sermon> findPublicUserSermons(
+            @Param("userId") UUID userId,
+            @Param("worshipType") String worshipType,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("scripture") String scripture,
+            Pageable pageable
+    );
+
+    // 모드 3: 비공개 + 해당 사용자의 설교
+    @Query("SELECT s FROM Sermon s " +
+            "WHERE s.isPublic = false AND s.owner.id = :userId " +
+            "AND (:worshipType IS NULL OR s.worshipType = :worshipType) " +
+            "AND (:startDate IS NULL OR s.sermonDate >= :startDate) " +
+            "AND (:endDate IS NULL OR s.sermonDate <= :endDate) " +
+            "AND (:scripture IS NULL OR " +
+            "    (LOWER(s.mainScripture) LIKE LOWER(CONCAT('%', :scripture, '%')) " +
+            "     OR LOWER(s.additionalScripture) LIKE LOWER(CONCAT('%', :scripture, '%'))))")
+
+    Page<Sermon> findPrivateUserSermons(
+            @Param("userId") UUID userId,
+            @Param("worshipType") String worshipType,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("scripture") String scripture,
+
+            Pageable pageable
+    );
+
+
+
+
+
+
+
+
+
+
 }
