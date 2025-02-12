@@ -9,6 +9,7 @@ import com.project.bibly_be.sermon.entity.Sermon;
 import com.project.bibly_be.sermon.repository.ContentRepository;
 import com.project.bibly_be.sermon.repository.SermonRepository;
 import com.project.bibly_be.sermon.specification.SermonSpecification;
+import com.project.bibly_be.sermon.util.ScriptureUtil;
 import com.project.bibly_be.user.entity.User;
 import com.project.bibly_be.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,10 +28,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,6 +39,7 @@ public class SermonService {
     private final ContentRepository contentRepository;
     private final UserRepository userRepository;
     private final ReturnTypeParser returnTypeParser;
+
 
     public SermonResponseDTO createSermon(SermonRequestDTO requestDTO) {
         // FETCH user
@@ -344,7 +343,21 @@ public class SermonService {
             end = LocalDate.parse(endDate, formatter).atTime(23, 59, 59);
         }
         //worshipTypes.set(0, "all".equalsIgnoreCase(worshipTypes.get(0)) ? null : worshipTypes.get(0));
-        Specification<Sermon> spec = SermonSpecification.withFilters(userId,keyword,worshipTypes,start,end,scriptures,mode);
+        //scripture 처리
+        List<String> newScripture = new ArrayList<>();
+        if (scriptures != null) {
+            for (String scripture : scriptures) {
+                // "all"이면 getMappedWorshipTypes() 내부에서 null을 반환하도록 구현되어 있다면,
+                // null 체크 후 처리합니다.
+                List<String> mapped = ScriptureUtil.getScriptureMapping(scripture);
+                if (mapped != null) {
+                    newScripture.addAll(mapped);
+                }
+            }
+        }
+
+
+        Specification<Sermon> spec = SermonSpecification.withFilters(userId,keyword,worshipTypes,start,end,newScripture,mode);
 
         Page<Sermon> result = sermonRepository.findAll(spec, pageable);
 
@@ -372,7 +385,20 @@ public class SermonService {
             end = LocalDate.parse(endDate, formatter).atTime(23, 59, 59);
         }
 
-        Specification<Sermon> spec = SermonSpecification.withFilters(null,keyword,worshipTypes,start,end,scriptures,4);
+        //scripture mapping 처리
+        List<String> newScripture = new ArrayList<>();
+        if (scriptures != null) {
+            for (String scripture : scriptures) {
+                // "all"이면 getMappedWorshipTypes() 내부에서 null을 반환하도록 구현되어 있다면,
+                // null 체크 후 처리합니다.
+                List<String> mapped = ScriptureUtil.getScriptureMapping(scripture);
+                if (mapped != null) {
+                    newScripture.addAll(mapped);
+                }
+            }
+        }
+
+        Specification<Sermon> spec = SermonSpecification.withFilters(null,keyword,worshipTypes,start,end,newScripture,4);
 
         Page<Sermon> result = sermonRepository.findAll(spec, pageable);
 
