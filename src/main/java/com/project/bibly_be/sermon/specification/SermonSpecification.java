@@ -44,6 +44,9 @@ public class SermonSpecification {
                         cb.isFalse(root.get("isPublic")),
                         cb.equal(root.get("owner").get("id"), userId)
                 ));
+            }else if (mode == 4) {
+                // 모드 4: 모든 사용자의 설교
+                predicates.add(cb.conjunction());
             }
 
             // worshipTypes 조건: List가 비어있지 않으면 IN 조건 사용
