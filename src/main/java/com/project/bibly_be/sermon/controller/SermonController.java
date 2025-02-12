@@ -160,10 +160,10 @@ public class SermonController {
     public SermonResponsePageDTO getFilteredSermonsPage(
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "sort", defaultValue = "desc") String sortOrder,
-            @RequestParam(value = "worshipType", defaultValue = "all") String worshipType,
+            @RequestParam(value = "worshipType", required = false) List<String> worshipType,
             @RequestParam(value = "startDate", required = false) String startDate,
             @RequestParam(value = "endDate", required = false) String endDate,
-            @RequestParam(value = "scripture", required = false) String scripture,
+            @RequestParam(value = "scripture", required = false) List<String> scripture,
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "10") int size
     ) {
