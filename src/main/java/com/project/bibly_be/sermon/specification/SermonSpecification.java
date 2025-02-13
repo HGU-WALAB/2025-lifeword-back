@@ -83,10 +83,13 @@ public class SermonSpecification {
             // keyword 조건 (작성자 이름, 설교 제목에 대해 OR 조건)
             if (keyword != null && !keyword.trim().isEmpty()) {
                 String pattern = "%" + keyword.toLowerCase() + "%";
+                Join<Sermon, ?> contentJoin = root.join("contents", JoinType.LEFT);
                 Predicate keywordPredicate = cb.or(
                         cb.like(cb.lower(root.get("owner").get("name")), pattern),
-                        cb.like(cb.lower(root.get("sermonTitle")), pattern)
+                        cb.like(cb.lower(root.get("sermonTitle")), pattern),
                         // 컨텐츠 검색 조건을 추가하려면, 별도의 Join과 조건이 필요합니다.
+                        cb.like(cb.lower(root.get("summary")), pattern),
+                        cb.like(cb.lower(contentJoin.get("contentText")), pattern)
                 );
                 predicates.add(keywordPredicate);
             }
