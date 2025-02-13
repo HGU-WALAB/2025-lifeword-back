@@ -1,15 +1,20 @@
 package com.project.bibly_be.user.service;
 
-import com.project.bibly_be.user.dto.UserRequestDTO;
-import com.project.bibly_be.user.dto.UserResponseDTO;
+import com.project.bibly_be.user.dto.*;
+import com.project.bibly_be.user.entity.Role;
 import com.project.bibly_be.user.entity.User;
 import com.project.bibly_be.user.repository.UserRepository;
 import com.project.bibly_be.user.util.OauthProviderUtil;
 import com.project.bibly_be.user.util.OauthUidUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.*;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -19,6 +24,93 @@ import java.util.stream.Collectors;
 @Transactional
 public class UserService {
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final RestTemplate restTemplate = new RestTemplate();
+
+
+    /**
+     * 📌 4. OAuth 로그인 공통 로직 (카카오 & 구글)
+     */
+    private UserResponseDTO processOAuthUser(String email, String name, String provider, String providerUid) {
+        Optional<User> existingUser = userRepository.findByEmail(email);
+
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
+
+            // 기존 oauthProvider 업데이트
+            List<String> providerList = OauthProviderUtil.jsonToList(user.getOauthProvider());
+            int idx = OauthProviderUtil.getProviderIndex(provider);
+            providerList.set(idx, provider);
+            user.setOauthProvider(OauthProviderUtil.listToJson(providerList));
+
+            // 기존 oauthUid 업데이트
+            List<String> uidList = OauthUidUtil.jsonToList(user.getOauthUid());
+            uidList.set(idx, providerUid);
+            user.setOauthUid(OauthUidUtil.listToJson(uidList));
+
+            userRepository.save(user);
+            return UserResponseDTO.from(user);
+        } else {
+            // 새 사용자 생성
+            List<String> providerList = OauthProviderUtil.initProviderList();
+            int idx = OauthProviderUtil.getProviderIndex(provider);
+            providerList.set(idx, provider);
+
+            List<String> uidList = OauthUidUtil.initUidList();
+            uidList.set(idx, providerUid);
+
+            User newUser = User.builder()
+                    .email(email)
+                    .name(name)
+                    .oauthProvider(OauthProviderUtil.listToJson(providerList))
+                    .oauthUid(OauthUidUtil.listToJson(uidList))
+                    .role(Role.USER)
+                    .build();
+
+            userRepository.save(newUser);
+            return UserResponseDTO.from(newUser);
+        }
+    }
+
+    /**
+     * 📌 5. 카카오 사용자 정보 가져오기
+     */
+    private KakaoUserInfo getKakaoUserInfo(String accessToken) {
+        String url = "https://kapi.kakao.com/v2/user/me";
+        KakaoResponseDTO response = restTemplate.getForObject(url, KakaoResponseDTO.class);
+
+        if (response == null || response.getKakaoAccount() == null) {
+            throw new IllegalArgumentException("카카오 사용자 정보를 가져올 수 없습니다.");
+        }
+
+        return new KakaoUserInfo(response.getKakaoAccount().getEmail(), response.getKakaoAccount().getProfile().getNickname(), response.getId());
+    }
+
+    /**
+     * 📌 6. 구글 사용자 정보 가져오기
+     */
+    private GoogleUserInfo getGoogleUserInfo(String accessToken) {
+        String url = "https://www.googleapis.com/oauth2/v2/userinfo";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + accessToken);  // ✅ 올바른 accessToken 포함
+        headers.set("Content-Type", "application/json");
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        System.out.println("🔍 Google API 요청 Authorization 헤더: " + headers);
+
+        ResponseEntity<GoogleUserInfo> response = restTemplate.exchange(
+                url, HttpMethod.GET, entity, GoogleUserInfo.class
+        );
+
+        if (response.getBody() == null) {
+            throw new IllegalArgumentException("❌ 구글 사용자 정보를 가져올 수 없습니다.");
+        }
+
+        return response.getBody();
+    }
+
 
     /**
      * 1) 사용자 생성 (기존 로직 그대로)
@@ -27,6 +119,7 @@ public class UserService {
      */
     public UserResponseDTO createUser(UserRequestDTO request) {
         boolean isBibly = false;
+        Role userRole = Role.USER;
 
         // 1) 필수값 체크 로직
         if (request.getOauthProvider() != null) {
@@ -82,13 +175,13 @@ public class UserService {
                     .oauthProvider(OauthProviderUtil.listToJson(providerList))
                     .oauthUid(OauthUidUtil.listToJson(uidList))
                     .email(request.getEmail())
-                    .password(request.getPassword())
+                    .password(passwordEncoder.encode(request.getPassword())) // 비밀번호 암호화 후 저장
                     .name(request.getName())
                     .contact(request.getContact())
                     .church(request.getChurch())
                     .job(request.getJob())
                     .place(request.getPlace())
-                    .isAdmin(false)
+                    .role(userRole)
                     .build();
 
             User savedUser = userRepository.save(user);
@@ -108,7 +201,7 @@ public class UserService {
                 .exists(true)
                 .userId(user.getId())
                 .job(user.getJob())
-                .isAdmin(user.getIsAdmin())
+                .role(user.getRole())
                 .build();
     }
 
@@ -157,7 +250,7 @@ public class UserService {
                 .exists(true)
                 .userId(user.getId())
                 .job(user.getJob())
-                .isAdmin(user.getIsAdmin())
+                .role(user.getRole())
                 .build();
     }
 
@@ -171,14 +264,15 @@ public class UserService {
 
         if (biblyUserOpt.isPresent()) {
             User biblyUser = biblyUserOpt.get();
-            if (!biblyUser.getPassword().equals(password)) {
+            if (!passwordEncoder.matches(password, biblyUser.getPassword())) {
                 throw new InputMismatchException("비밀번호 틀림요");
             }
+
             return UserResponseDTO.VerifyResponse.builder()
                     .exists(true)
                     .userId(biblyUser.getId())
                     .job(biblyUser.getJob())
-                    .isAdmin(biblyUser.getIsAdmin())
+                    .role(biblyUser.getRole())
                     .build();
 
         } else {
@@ -191,7 +285,7 @@ public class UserService {
                             .exists(true)
                             .userId(anyUser.getId())
                             .job(anyUser.getJob())
-                            .isAdmin(anyUser.getIsAdmin())
+                            .role(anyUser.getRole())
                             .build();
                 }
 
@@ -237,7 +331,7 @@ public class UserService {
                     .exists(true) //
                     .userId(user.getId())
                     .job(user.getJob())
-                    .isAdmin(user.getIsAdmin())
+                    .role(user.getRole())
                     .build();
 
         }else{
