@@ -1,5 +1,6 @@
 package com.project.bibly_be.user.dto;
 
+import com.project.bibly_be.user.entity.Role;
 import com.project.bibly_be.user.entity.User;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,6 +18,7 @@ public class UserResponseDTO {
     private String church;
     private String job;
     private String place;
+    private Role role;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -30,6 +32,7 @@ public class UserResponseDTO {
                 .church(user.getChurch())
                 .job(user.getJob())
                 .place(user.getPlace())
+                .role(user.getRole())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
@@ -42,7 +45,7 @@ public class UserResponseDTO {
     @Builder
     public static class VerifyResponse {
         private boolean exists;
-        private boolean isAdmin;
+        private Role role;
         private String job;
         private UUID userId;
     }
