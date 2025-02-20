@@ -80,18 +80,34 @@ public class SermonSpecification {
                 }
             }
 
-            // keyword 조건 (작성자 이름, 설교 제목에 대해 OR 조건)
+            // keyword 조건: 작성자 이름, 설교 제목, 설교 요약, 컨텐츠 내용에 대해 OR 조건
+            // 컨텐츠 내용을 검색하기 위해 LEFT JOIN 추가
+            Join<Sermon, ?> contentJoin = root.join("contents", JoinType.LEFT);
+
             if (keyword != null && !keyword.trim().isEmpty()) {
                 String pattern = "%" + keyword.toLowerCase() + "%";
-                Join<Sermon, ?> contentJoin = root.join("contents", JoinType.LEFT);
                 Predicate keywordPredicate = cb.or(
                         cb.like(cb.lower(root.get("owner").get("name")), pattern),
                         cb.like(cb.lower(root.get("sermonTitle")), pattern),
-                        // 컨텐츠 검색 조건을 추가하려면, 별도의 Join과 조건이 필요합니다.
                         cb.like(cb.lower(root.get("summary")), pattern),
                         cb.like(cb.lower(contentJoin.get("contentText")), pattern)
                 );
                 predicates.add(keywordPredicate);
+
+                // 추가: 정렬 우선순위 CASE 표현식을 ORDER BY에 추가하려면,
+                // CriteriaQuery의 orderBy()를 직접 설정합니다.
+                // 단, count 쿼리 시에는 orderBy()가 무시되어야 하므로,
+                // query.getResultType()이 Sermon가 아닐 경우(orderBy 적용 X) 처리합니다.
+                if (query.getResultType() != Long.class) {
+                    Expression<Object> orderPriority = cb.selectCase()
+                            .when(cb.equal(cb.lower(root.get("owner").get("name")), keyword.toLowerCase()), 1)
+                            .when(cb.equal(cb.lower(root.get("sermonTitle")), keyword.toLowerCase()), 2)
+                            .when(cb.equal(cb.lower(root.get("summary")), keyword.toLowerCase()), 3)
+                            .when(cb.equal(cb.lower(contentJoin.get("contentText")), keyword.toLowerCase()), 4)
+                            .otherwise(5);
+                    // 오름차순 정렬하면 우선순위가 낮은 값이 먼저 나옵니다.
+                    query.orderBy(cb.asc(orderPriority));
+                }
             }
 
             // 모든 조건을 AND로 결합하여 반환
