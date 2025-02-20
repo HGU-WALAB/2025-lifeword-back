@@ -10,13 +10,16 @@ import java.util.UUID;
 @Getter
 public class SermonResponsePageDTO {
     private final int totalPage;
+    private final long totalElements;
     private final List<SermonResponseDTO> content;
 
 
     @Builder
-    public SermonResponsePageDTO(List<SermonResponseDTO> content, int totalPage) {
+    public SermonResponsePageDTO(List<SermonResponseDTO> content, int totalPage, long totalElements) {
         this.content = content;
         this.totalPage = totalPage;
+        this.totalElements = totalElements;
+
     }
 
 
@@ -24,6 +27,7 @@ public class SermonResponsePageDTO {
         return SermonResponsePageDTO.builder()
                 .content(page.getContent())
                 .totalPage(page.getTotalPages())
+                .totalElements(page.getTotalElements())
                 .build();
     }
 }
