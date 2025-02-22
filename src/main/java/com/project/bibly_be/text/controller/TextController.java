@@ -1,6 +1,7 @@
 package com.project.bibly_be.text.controller;
 
 import com.project.bibly_be.text.dto.TextContentRequest;
+import com.project.bibly_be.text.dto.TextPatchRequest;
 import com.project.bibly_be.text.dto.TextResponseDTO;
 import com.project.bibly_be.text.service.TextService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,12 +33,31 @@ public class TextController {
         return ResponseEntity.ok("Added successfully");
     }
 
-    @GetMapping("/sermon")
+    @GetMapping("/list/{sermonId}")
     public ResponseEntity<List<TextResponseDTO>> getTexts(
-            @RequestParam("sermonId") Long sermonId,
+            @PathVariable("sermonId") Long sermonId,
             @RequestParam("userId") String userId) {
 
         List<TextResponseDTO> dtos = textService.getTextsForSermon(sermonId, userId);
         return ResponseEntity.ok(dtos);
     }
+    @PatchMapping("/update/{textId}")
+    public ResponseEntity<String> patchText(
+            @PathVariable("textId") Long textId,
+            @RequestParam("userId") String userId,
+            @RequestBody TextPatchRequest request) {
+
+        textService.patchText(textId, userId, request);
+        return ResponseEntity.ok("Updated successfully");
+    }
+
+    @DeleteMapping("/delete/{textId}")
+    public ResponseEntity<String> deleteText(
+            @PathVariable("textId") Long textId,
+            @RequestParam("userId") String userId) {
+
+        textService.deleteText(textId, userId);
+        return ResponseEntity.ok("Deleted successfully");
+    }
+
 }
