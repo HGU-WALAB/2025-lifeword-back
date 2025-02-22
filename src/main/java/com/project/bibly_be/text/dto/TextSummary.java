@@ -4,7 +4,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class TextResponseDTO {
+public class TextSummary {
     private Long id;
     private Long sermonId;
     private String userId;
@@ -12,5 +12,5 @@ public class TextResponseDTO {
     private boolean isDraft;
     private LocalDateTime textCreatedAt;
     private LocalDateTime textUpdatedAt;
-    private String textContent;
 }
+//textContent 없음

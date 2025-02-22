@@ -2,8 +2,8 @@ package com.project.bibly_be.text.service;
 
 import com.project.bibly_be.sermon.entity.Sermon;
 import com.project.bibly_be.sermon.repository.SermonRepository;
-import com.project.bibly_be.text.dto.TextPatchRequest;
-import com.project.bibly_be.text.dto.TextResponseDTO;
+import com.project.bibly_be.text.dto.TextResponse;
+import com.project.bibly_be.text.dto.TextSummary;
 import com.project.bibly_be.text.entity.Text;
 import com.project.bibly_be.text.repository.TextRepository;
 import com.project.bibly_be.user.entity.User;
@@ -49,48 +49,52 @@ public class TextService {
         textRepository.save(text);
     }
 
-    public List<TextResponseDTO> getTextsForSermon(Long sermonId, String userId) {
+    public List<TextSummary> getTextSummariesForSermon(Long sermonId, String userId) {
         UUID uuid = UUID.fromString(userId);
         List<Text> texts = textRepository.findBySermonIdAndVisibility(sermonId, uuid);
         return texts.stream()
-                .map(this::convertToDto)
+                .map(this::convertToSummaryDto)
                 .collect(Collectors.toList());
     }
 
-    private TextResponseDTO convertToDto(Text text) {
-        TextResponseDTO dto = new TextResponseDTO();
-        dto.setId(text.getId());
-        dto.setSermonId(text.getSermon().getSermonId());
-        dto.setUserId(text.getUser().getId().toString());
-        dto.setTextTitle(text.getTextTitle());
-        dto.setDraft(text.isDraft()); // Note: setter name is 'setDraft'
-        dto.setTextContent(text.getTextContent());
-        dto.setTextCreatedAt(text.getTextCreatedAt());
-        dto.setTextUpdatedAt(text.getTextUpdatedAt());
-        return dto;
+    public TextResponse getTextDetail(Long sermonId, Long textId, String userId) {
+        Text text = textRepository.findById(textId)
+                .orElseThrow(() -> new RuntimeException("Text not found"));
+
+        // TEXT 가 해당 SEREMON 에 있는건지 확인
+        if (!text.getSermon().getSermonId().equals(sermonId)) {
+            throw new RuntimeException("Text does not belong to the specified sermon.");
+        }
+
+        // If draft, check that the user is owner of text or admin (admin 은 수정 삭제 다 가능)
+        User currentUser = userRepository.findById(UUID.fromString(userId))
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (text.isDraft() && !text.getUser().getId().toString().equals(userId)
+                && (currentUser.getIsAdmin() == null || !currentUser.getIsAdmin())) {
+            throw new RuntimeException("Unauthorized: You do not have permission to view this draft.");
+        }
+
+        return convertToResponseDto(text);
     }
 
-    public Text patchText(Long textId, String userId, TextPatchRequest request) {
+    public Text patchText(Long textId, String userId, String textTitle, boolean isDraft, String textContent) {
         Text text = textRepository.findById(textId)
                 .orElseThrow(() -> new RuntimeException("Text not found"));
 
         User currentUser = userRepository.findById(UUID.fromString(userId))
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Allow patching if the user owns the text or is an admin
+        // admin 허용
         if (!text.getUser().getId().toString().equals(userId) &&
                 (currentUser.getIsAdmin() == null || !currentUser.getIsAdmin())) {
             throw new RuntimeException("Unauthorized: You do not have permission to update this text.");
         }
 
-        if(request.getTextTitle() != null) {
-            text.setTextTitle(request.getTextTitle());
-        }
-        if(request.getTextContent() != null) {
-            text.setTextContent(request.getTextContent());
-        }
-        if(request.getIsDraft() != null) {
-            text.setDraft(request.getIsDraft());
+
+        text.setTextTitle(textTitle);
+        text.setDraft(isDraft);
+        if(textContent != null) {
+            text.setTextContent(textContent);
         }
         return textRepository.save(text);
     }
@@ -102,12 +106,38 @@ public class TextService {
         User currentUser = userRepository.findById(UUID.fromString(userId))
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Allow deletion if the user owns the text or is an admin
+        // admin 허용
         if (!text.getUser().getId().toString().equals(userId) &&
                 (currentUser.getIsAdmin() == null || !currentUser.getIsAdmin())) {
             throw new RuntimeException("Unauthorized: You do not have permission to delete this text.");
         }
 
         textRepository.delete(text);
+    }
+
+    private TextResponse convertToResponseDto(Text text) {
+        TextResponse dto = new TextResponse();
+        dto.setId(text.getId());
+        dto.setSermonId(text.getSermon().getSermonId());
+        dto.setUserId(text.getUser().getId().toString());
+        dto.setTextTitle(text.getTextTitle());
+        dto.setDraft(text.isDraft());
+        dto.setTextContent(text.getTextContent());
+        dto.setTextCreatedAt(text.getTextCreatedAt());
+        dto.setTextUpdatedAt(text.getTextUpdatedAt());
+        return dto;
+    }
+
+    // 짧은 list
+    private TextSummary convertToSummaryDto(Text text) {
+        TextSummary dto = new TextSummary();
+        dto.setId(text.getId());
+        dto.setSermonId(text.getSermon().getSermonId());
+        dto.setUserId(text.getUser().getId().toString());
+        dto.setTextTitle(text.getTextTitle());
+        dto.setDraft(text.isDraft());
+        dto.setTextCreatedAt(text.getTextCreatedAt());
+        dto.setTextUpdatedAt(text.getTextUpdatedAt());
+        return dto;
     }
 }
