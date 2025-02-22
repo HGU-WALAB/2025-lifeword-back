@@ -10,4 +10,7 @@ import java.util.UUID;
 
 public interface TextRepository extends JpaRepository<Text, Long> {
 
+    @Query("SELECT t FROM Text t WHERE t.sermon.sermonId = :sermonId AND " +
+            "(t.isDraft = false OR (t.isDraft = true AND t.user.id = :userId))")
+    List<Text> findBySermonIdAndVisibility(@Param("sermonId") Long sermonId, @Param("userId") UUID userId);
 }

@@ -1,13 +1,16 @@
 package com.project.bibly_be.text.controller;
 
 import com.project.bibly_be.text.dto.TextContentRequest;
+import com.project.bibly_be.text.dto.TextResponseDTO;
 import com.project.bibly_be.text.service.TextService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/api/texts")
+@RequestMapping("/api/v1/texts")
 public class TextController {
 
     private final TextService textService;
@@ -26,7 +29,15 @@ public class TextController {
             @RequestBody TextContentRequest textContentRequest) {
 
         textService.createText(sermonId, userId, isDraft, textTitle, textContentRequest.getTextContent());
-        textService.createText(sermonId, userId, isDraft, textTitle, textContentRequest.getTextContent());
-        return ResponseEntity.ok("성공적으로 추가하였습니다");
+        return ResponseEntity.ok("Added successfully");
+    }
+
+    @GetMapping("/sermon")
+    public ResponseEntity<List<TextResponseDTO>> getTexts(
+            @RequestParam("sermonId") Long sermonId,
+            @RequestParam("userId") String userId) {
+
+        List<TextResponseDTO> dtos = textService.getTextsForSermon(sermonId, userId);
+        return ResponseEntity.ok(dtos);
     }
 }
