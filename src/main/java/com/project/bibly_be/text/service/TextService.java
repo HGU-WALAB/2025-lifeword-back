@@ -118,6 +118,7 @@ public class TextService {
     private TextResponse convertToResponseDto(Text text) {
         TextResponse dto = new TextResponse();
         dto.setId(text.getId());
+        dto.setUserName(text.getUser().getName());
         dto.setSermonId(text.getSermon().getSermonId());
         dto.setUserId(text.getUser().getId().toString());
         dto.setTextTitle(text.getTextTitle());
@@ -134,6 +135,7 @@ public class TextService {
         dto.setId(text.getId());
         dto.setSermonId(text.getSermon().getSermonId());
         dto.setUserId(text.getUser().getId().toString());
+        dto.setUserName(text.getUser().getName());
         dto.setTextTitle(text.getTextTitle());
         dto.setDraft(text.isDraft());
         dto.setTextCreatedAt(text.getTextCreatedAt());
