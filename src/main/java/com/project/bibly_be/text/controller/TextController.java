@@ -64,7 +64,7 @@ public class TextController {
                 return ResponseEntity.ok("Updated successfully");
         }
 
-        @Operation(summary = "Get list of texts in sermon", description = "한 설교에 있는 모든 text 를 lsit 으로 보냄. textContent 외에 모든 정보~~ \n /{sermonId}/{textId} 가 text의 details ( textcontent) 까지 보내는 endpoint 임  ")
+        @Operation(summary = "Get list of texts in sermon", description = "한 설교에 있는 모든 text 를 lsit 으로 보냄. textContent 외에 모든 정보~~ \n /{sermonId}/{textId} 가 text의 details ( textcontent) 까지 보내는 endpoint 임  \n 관리자 userId 면 모든 text 조회")
         @ApiResponses({
                         @ApiResponse(responseCode = "200", description = "Successfully retrieved"),
                         @ApiResponse(responseCode = "404", description = "Sermon or texts not found"),

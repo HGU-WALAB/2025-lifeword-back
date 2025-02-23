@@ -375,7 +375,7 @@ public class SermonService {
         // 각 sermon마다 bookmark 여부를 판단 후 DTO 매핑 (2번 방법 적용)
         Page<SermonResponseDTO> pageDTO = result.map(sermon -> {
             boolean isBookmarked = bookmarkRepository.existsByUserAndSermon(user, sermon);
-            Long textCount = textRepository.countBySermonIdWithIsDraft(sermon.getSermonId(),false);
+            Long textCount = textRepository.countBySermonIdWithIsDraft(sermon.getSermonId(),userId);
             return SermonResponseDTO.from(sermon, isBookmarked, textCount);
         });
 
