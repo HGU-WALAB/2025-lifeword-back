@@ -54,6 +54,14 @@ public class TextService {
 
     public List<TextSummary> getTextSummariesForSermon(Long sermonId, String userId) {
         UUID uuid = UUID.fromString(userId);
+        User user = userRepository.findById(uuid).orElseThrow(() -> new RuntimeException("User not found"));
+        if(user.getIsAdmin()){// if admin user , get all ,
+            List<Text> texts = textRepository.findBySermon_SermonId(sermonId);
+            return texts.stream()
+                    .map(this::convertToSummaryDto)
+                    .collect(Collectors.toList());
+        }
+        // if not admin user, use findBySermonIdAndVisibility
         List<Text> texts = textRepository.findBySermonIdAndVisibility(sermonId, uuid);
         return texts.stream()
                 .map(this::convertToSummaryDto)
