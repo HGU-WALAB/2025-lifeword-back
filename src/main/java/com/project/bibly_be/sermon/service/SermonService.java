@@ -1,5 +1,6 @@
 package com.project.bibly_be.sermon.service;
 
+import com.project.bibly_be.bookmark.repository.BookmarkRepository;
 import com.project.bibly_be.sermon.dto.ContentDTO;
 import com.project.bibly_be.sermon.dto.SermonRequestDTO;
 import com.project.bibly_be.sermon.dto.SermonResponseDTO;
@@ -39,6 +40,7 @@ public class SermonService {
     private final ContentRepository contentRepository;
     private final UserRepository userRepository;
     private final ReturnTypeParser returnTypeParser;
+    private final BookmarkRepository bookmarkRepository;
 
 
     public SermonResponseDTO createSermon(SermonRequestDTO requestDTO) {
@@ -361,9 +363,26 @@ public class SermonService {
 
         Page<Sermon> result = sermonRepository.findAll(spec, pageable);
 
-        return SermonResponsePageDTO.fromPage(result.map(this::mapToSermonResponseDTO));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
+        // 각 sermon마다 bookmark 여부를 판단 후 DTO 매핑 (2번 방법 적용)
+        Page<SermonResponseDTO> pageDTO = result.map(sermon -> {
+            boolean isBookmarked = bookmarkRepository.existsByUserAndSermon(user, sermon);
+            return SermonResponseDTO.from(sermon, isBookmarked);
+        });
 
+        return SermonResponsePageDTO.fromPage(pageDTO);
+//        Page<SermonResponseDTO> pageDTO = result.map(sermon -> {
+//            // 각 sermon마다 북마크 여부를 판단
+//
+//            boolean isBookmarked = bookmarkRepository.existsByUserAndSermon(user, sermon);
+//            // 2번 방법으로 DTO 변환 (추가 파라미터 전달)
+//            return SermonResponseDTO.from(sermon, isBookmarked);
+//        });
+//
+//
+//        return SermonResponsePageDTO.fromPage(result.map(this::mapToSermonResponseDTO));
     }
 
 
@@ -401,7 +420,6 @@ public class SermonService {
         Specification<Sermon> spec = SermonSpecification.withFilters(null,keyword,worshipTypes,start,end,newScripture,4);
 
         Page<Sermon> result = sermonRepository.findAll(spec, pageable);
-
         return SermonResponsePageDTO.fromPage(result.map(this::mapToSermonResponseDTO));
     }
 

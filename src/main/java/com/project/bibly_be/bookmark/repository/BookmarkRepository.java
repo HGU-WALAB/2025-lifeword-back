@@ -35,4 +35,6 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
             "WHERE b.user = :user AND b.isSermon = false")
     List<Bookmark> findAllVerseByUser(@Param("user") User user);
 
+    Boolean existsByUserAndSermon(User user, Sermon sermon);
+
 }
