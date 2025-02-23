@@ -15,6 +15,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static com.project.bibly_be.user.entity.Role.ADMIN;
+import static com.project.bibly_be.user.entity.Role.USER;
+
 @Service
 public class TextService {
 
@@ -70,7 +73,7 @@ public class TextService {
         User currentUser = userRepository.findById(UUID.fromString(userId))
                 .orElseThrow(() -> new RuntimeException("User not found"));
         if (text.isDraft() && !text.getUser().getId().toString().equals(userId)
-                && (currentUser.getIsAdmin() == null || !currentUser.getIsAdmin())) {
+                && (currentUser.getRole() == null || currentUser.getRole()==USER)) {
             throw new RuntimeException("Unauthorized: You do not have permission to view this draft.");
         }
 
@@ -86,7 +89,7 @@ public class TextService {
 
         // admin 허용
         if (!text.getUser().getId().toString().equals(userId) &&
-                (currentUser.getIsAdmin() == null || !currentUser.getIsAdmin())) {
+                (currentUser.getRole() == null || currentUser.getRole()==USER)) {
             throw new RuntimeException("Unauthorized: You do not have permission to update this text.");
         }
 
@@ -108,7 +111,7 @@ public class TextService {
 
         // admin 허용
         if (!text.getUser().getId().toString().equals(userId) &&
-                (currentUser.getIsAdmin() == null || !currentUser.getIsAdmin())) {
+                (currentUser.getRole() == null || currentUser.getRole()==USER)) {
             throw new RuntimeException("Unauthorized: You do not have permission to delete this text.");
         }
 
