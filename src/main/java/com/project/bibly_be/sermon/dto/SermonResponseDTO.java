@@ -1,5 +1,6 @@
 package com.project.bibly_be.sermon.dto;
 
+import com.project.bibly_be.sermon.entity.Sermon;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -26,4 +27,27 @@ public class SermonResponseDTO {
     private String recordInfo;
     private String fileCode;
     private List<ContentDTO> contents;
+    //bookmarked (if sermon.userId == userId )-> true else false;
+    private boolean bookmarked;
+
+    public static SermonResponseDTO from(Sermon sermon, boolean bookmarked) {
+        return SermonResponseDTO.builder()
+                .sermonId(sermon.getSermonId())
+                .ownerName(sermon.getOwner().getName())
+                .sermonDate(sermon.getSermonDate())
+                .createdAt(sermon.getCreatedAt())
+                .updatedAt(sermon.getUpdatedAt())
+                .isPublic(sermon.isPublic())
+                .worshipType(sermon.getWorshipType())
+                .mainScripture(sermon.getMainScripture())
+                .additionalScripture(sermon.getAdditionalScripture())
+                .sermonTitle(sermon.getSermonTitle())
+                .summary(sermon.getSummary())
+                .notes(sermon.getNotes())
+                .recordInfo(sermon.getRecordInfo())
+                .fileCode(sermon.getFileCode())
+                .bookmarked(bookmarked)
+                .build();
+    }
+
 }
