@@ -11,6 +11,7 @@ import com.project.bibly_be.sermon.repository.ContentRepository;
 import com.project.bibly_be.sermon.repository.SermonRepository;
 import com.project.bibly_be.sermon.specification.SermonSpecification;
 import com.project.bibly_be.sermon.util.ScriptureUtil;
+import com.project.bibly_be.text.repository.TextRepository;
 import com.project.bibly_be.user.entity.User;
 import com.project.bibly_be.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,7 @@ public class SermonService {
     private final UserRepository userRepository;
     private final ReturnTypeParser returnTypeParser;
     private final BookmarkRepository bookmarkRepository;
+    private final TextRepository textRepository;
 
 
     public SermonResponseDTO createSermon(SermonRequestDTO requestDTO) {
@@ -293,6 +295,7 @@ public class SermonService {
                 .collect(Collectors.toList())
                 : Collections.emptyList();
 
+        Long textCount = textRepository.countBySermonId(sermon.getSermonId());
         return SermonResponseDTO.builder()
                 .sermonId(sermon.getSermonId())
                 .ownerName(sermon.getOwner() != null ? sermon.getOwner().getName() : "Unknown Owner")
@@ -310,6 +313,7 @@ public class SermonService {
                 .recordInfo(sermon.getRecordInfo())
                 .fileCode(sermon.getFileCode())
                 .contents(contents)
+                .textCount(textCount)
                 .build();
     }
 
@@ -366,10 +370,13 @@ public class SermonService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
+
+
         // 각 sermon마다 bookmark 여부를 판단 후 DTO 매핑 (2번 방법 적용)
         Page<SermonResponseDTO> pageDTO = result.map(sermon -> {
             boolean isBookmarked = bookmarkRepository.existsByUserAndSermon(user, sermon);
-            return SermonResponseDTO.from(sermon, isBookmarked);
+            Long textCount = textRepository.countBySermonIdWithIsDraft(sermon.getSermonId(),false);
+            return SermonResponseDTO.from(sermon, isBookmarked, textCount);
         });
 
         return SermonResponsePageDTO.fromPage(pageDTO);
@@ -420,6 +427,12 @@ public class SermonService {
         Specification<Sermon> spec = SermonSpecification.withFilters(null,keyword,worshipTypes,start,end,newScripture,4);
 
         Page<Sermon> result = sermonRepository.findAll(spec, pageable);
+        // 각 sermon마다 bookmark 여부를 판단 후 DTO 매핑 (2번 방법 적용)
+        Page<SermonResponseDTO> pageDTO = result.map(sermon -> {
+            boolean isBookmarked = false;
+            Long textCount = textRepository.countBySermonId(sermon.getSermonId());
+            return SermonResponseDTO.from(sermon, isBookmarked, textCount);
+        });
         return SermonResponsePageDTO.fromPage(result.map(this::mapToSermonResponseDTO));
     }
 

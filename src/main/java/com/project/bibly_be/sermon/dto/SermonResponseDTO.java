@@ -29,8 +29,9 @@ public class SermonResponseDTO {
     private List<ContentDTO> contents;
     //bookmarked (if sermon.userId == userId )-> true else false;
     private boolean bookmarked;
+    private Long textCount;
 
-    public static SermonResponseDTO from(Sermon sermon, boolean bookmarked) {
+    public static SermonResponseDTO from(Sermon sermon, boolean bookmarked, Long textCount) {
         return SermonResponseDTO.builder()
                 .sermonId(sermon.getSermonId())
                 .ownerName(sermon.getOwner().getName())
@@ -47,6 +48,7 @@ public class SermonResponseDTO {
                 .recordInfo(sermon.getRecordInfo())
                 .fileCode(sermon.getFileCode())
                 .bookmarked(bookmarked)
+                .textCount(textCount)
                 .build();
     }
 
