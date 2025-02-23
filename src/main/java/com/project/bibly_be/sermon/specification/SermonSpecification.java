@@ -6,6 +6,7 @@ import org.springframework.data.jpa.domain.Specification;
 import javax.persistence.criteria.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -49,10 +50,44 @@ public class SermonSpecification {
                 predicates.add(cb.conjunction());
             }
 
-            // worshipTypes 조건: List가 비어있지 않으면 IN 조건 사용
+            // 정규 예배유형(“기타”가 아닐 때만 취급)
+//            List<String> knownWorships = Arrays.asList(
+//                    "새벽예배","새벽", "수요예배","수요", "금요성령집회","금요성령", "주일1부예배","주일1부",
+//                    "주일2부예배","주일2부", "주일3부예배","주일3부", "주일청년예배","주일청년", "주일오후예배","주일오후",
+//                    "특별집회","특별", "부흥회"
+//            );
+            List<String> knownWorships = Arrays.asList(
+                    "새벽예배", "수요예배", "금요성령집회", "주일1부예배",
+                    "주일2부예배", "주일3부예배", "주일청년예배", "주일오후예배",
+                    "특별집회", "부흥회"
+            );
+
+
+            // worshipTypes 조건
             if (worships != null && !worships.isEmpty()) {
-                predicates.add(root.get("worshipType").in(worships));
+                // "기타" 포함 여부 검사
+                if (worships.contains("기타")) {
+                    // "기타"를 제외한 나머지 예배유형
+                    List<String> worshipsExceptEtc = new ArrayList<>(worships);
+                    worshipsExceptEtc.remove("기타");
+
+                    // NOT IN(knownWorships) → 정규 예배유형이 아닌 모든 값
+                    Predicate notInKnown = cb.not(root.get("worshipType").in(knownWorships));
+
+                    if (!worshipsExceptEtc.isEmpty()) {
+                        // (예배유형 IN worshipsExceptEtc) OR (예배유형 NOT IN knownWorships)
+                        Predicate inSelected = root.get("worshipType").in(worshipsExceptEtc);
+                        predicates.add(cb.or(inSelected, notInKnown));
+                    } else {
+                        // worships 리스트가 “기타”만 있을 경우 → “정규 예배유형이 아닌” 값 모두
+                        predicates.add(notInKnown);
+                    }
+                } else {
+                    // 평소대로 IN 조건
+                    predicates.add(root.get("worshipType").in(worships));
+                }
             }
+
 
             // 날짜 조건
             if (startDate != null) {
