@@ -275,9 +275,14 @@ public class UserService {
 
         if (biblyUserOpt.isPresent()) {
             User biblyUser = biblyUserOpt.get();
+
+            System.out.println("🔍 입력된 비밀번호: " + password);
+            System.out.println("🔍 DB에 저장된 비밀번호 (해싱된 값): " + biblyUser.getPassword());
+
             if (!passwordEncoder.matches(password, biblyUser.getPassword())) {
                 throw new InputMismatchException("비밀번호 틀림요");
             }
+            System.out.println("✅ 비밀번호 일치!");
 
             return UserResponseDTO.VerifyResponse.builder()
                     .exists(true)
@@ -293,7 +298,7 @@ public class UserService {
             if (anyUserOpt.isPresent()) {
 
                 User anyUser = anyUserOpt.get();
-                if (anyUser.getPassword() != null && anyUser.getPassword().equals(password)) {
+                if (anyUser.getPassword() != null && anyUser.getPassword().equals(password)) { // 여기 패스워드 검증 확인해야함.
                     return UserResponseDTO.VerifyResponse.builder()
                             .exists(true)
                             .userId(anyUser.getId())
