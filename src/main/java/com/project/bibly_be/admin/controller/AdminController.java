@@ -6,6 +6,7 @@ import com.project.bibly_be.user.dto.UserResponseDTO;
 import com.project.bibly_be.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -82,4 +83,15 @@ public class AdminController {
         return ResponseEntity.ok(updatedUser);
     }
 
+    // 관리자가 기존 평문 비밀번호를 암호화하는 API
+    @PostMapping("/encrypt-passwords")
+    public ResponseEntity<?> encryptPasswords() {
+        try {
+            userService.updateUserPasswords();
+            return ResponseEntity.ok("모든 평문 비밀번호를 암호화했습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("비밀번호 암호화 중 오류 발생: " + e.getMessage());
+        }
+    }
 }
