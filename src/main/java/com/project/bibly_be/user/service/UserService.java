@@ -276,8 +276,6 @@ public class UserService {
         if (biblyUserOpt.isPresent()) {
             User biblyUser = biblyUserOpt.get();
 
-            System.out.println("🔍 입력된 비밀번호: " + password);
-            System.out.println("🔍 DB에 저장된 비밀번호 (해싱된 값): " + biblyUser.getPassword());
 
             if (!passwordEncoder.matches(password, biblyUser.getPassword())) {
                 throw new InputMismatchException("비밀번호 틀림요");
@@ -298,10 +296,12 @@ public class UserService {
             if (anyUserOpt.isPresent()) {
 
                 User anyUser = anyUserOpt.get();
-                if (anyUser.getPassword() != null && anyUser.getPassword().equals(password)) { // 여기 패스워드 검증 확인해야함.
+                if (anyUser.getPassword() != null && passwordEncoder.matches(password, anyUser.getPassword())) { // 여기 패스워드 검증 확인해야함.
                     return UserResponseDTO.VerifyResponse.builder()
                             .exists(true)
                             .userId(anyUser.getId())
+                            .name(anyUser.getName())
+                            .email(anyUser.getEmail())
                             .job(anyUser.getJob())
                             .role(anyUser.getRole())
                             .build();
@@ -319,43 +319,45 @@ public class UserService {
     public UserResponseDTO.VerifyResponse setUserPassword(String email, String password) {
         Optional<User> users = userRepository.findByEmail(email);
 
-        if(users.isPresent()) {
+        if (users.isPresent()) {
             User user = users.get();
 
+            // 기존 비밀번호 확인 (디버깅용)
+            System.out.println("🔍 기존 암호화된 비밀번호: " + user.getPassword());
 
-            // if user doesnt have bibily account yet,
-           List<String> providerList = OauthProviderUtil.jsonToList(user.getOauthProvider());
-           int idx = OauthProviderUtil.getProviderIndex("bibly");
+            // Bibly 계정이 없는 경우, Provider 추가
+            List<String> providerList = OauthProviderUtil.jsonToList(user.getOauthProvider());
+            int idx = OauthProviderUtil.getProviderIndex("bibly");
 
-
-            if (providerList.get(idx) == null ){ //"null" 이 아님 **, null 객채임
-               //throw new IllegalStateException("providerList.get(idx): "+providerList.get(idx)+" idx"+idx); //debug
-               // basically same as,
-               // providerList.get(2)  is null value -> then put bibily in ouath provider.set(3)
-
-               providerList.set(idx, "bibly");
-               user.setOauthProvider(OauthProviderUtil.listToJson(providerList)); // setting user Oauth Provider[3] bibly
-
-
-           }
-            if(user.getPassword().equals(password)) {
-                throw new IllegalArgumentException("기존 비밀번호와 동일한 비밀번호 입니다.");
+            // **사용자 OAuth Provider 업데이트**
+            if (providerList.get(idx) == null) {
+                providerList.set(idx, "bibly");
+                user.setOauthProvider(OauthProviderUtil.listToJson(providerList));
             }
 
-            user.setPassword(password);
+            // 기존 비밀번호와 동일한지 확인
+            if (passwordEncoder.matches(password, user.getPassword())) {
+                throw new IllegalArgumentException("기존 비밀번호와 동일한 비밀번호입니다.");
+            }
+
+            //  비밀번호 암호화 후 저장
+            user.setPassword(passwordEncoder.encode(password));
             userRepository.save(user);
 
+            System.out.println("비밀번호 변경 완료!");
+
             return UserResponseDTO.VerifyResponse.builder()
-                    .exists(true) //
+                    .exists(true)
                     .userId(user.getId())
                     .job(user.getJob())
                     .role(user.getRole())
                     .build();
 
-        }else{
-            throw  new UsernameNotFoundException("email과 일치하는 회원이 없습니다.");
+        } else {
+            throw new UsernameNotFoundException("email과 일치하는 회원이 없습니다.");
         }
     }
+
 
     // -------------------- (이하 Admin / 기타 메서드 동일) -------------------- //
 
@@ -434,4 +436,33 @@ public class UserService {
         }
         return true;
     }
+
+    //기존 db에 있는 password 암호화 하는 것. (일회성임)
+    @Transactional
+    public void updateUserPasswords() {
+        List<User> users = userRepository.findAll();
+
+        for (User user : users) {
+            String currentPassword = user.getPassword();
+
+            if (currentPassword == null || currentPassword.isEmpty()) {
+                System.out.println("비밀번호가 없는 계정: " + user.getEmail() + " → 암호화 제외");
+                continue; // 비밀번호가 없는 계정은 변경하지 않음
+            }
+
+            // 현재 비밀번호가 암호화되지 않은 경우 (평문인지 체크)
+            // BCrypt 해싱된 비밀번호는 `$2a$`로 시작
+            if (!currentPassword.startsWith("$2a$")) {
+                String encryptedPassword = passwordEncoder.encode(currentPassword);
+                user.setPassword(encryptedPassword);
+                userRepository.save(user); // 업데이트 실행
+                System.out.println("비밀번호 암호화 완료: " + user.getEmail());
+            } else {
+                System.out.println("이미 암호화된 비밀번호: " + user.getEmail());
+            }
+        }
+    }
+
 }
+
+
