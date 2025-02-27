@@ -23,6 +23,7 @@ import com.project.bibly_be.user.security.JwtUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -298,8 +299,11 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
         // 현재 세션 무효화
-        request.getSession().invalidate();
-
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+        System.out.println("hidsfasdfafadsfdsfadsfdsafasdfassd");
         // SecurityContextHolder에서 인증 정보 제거
         SecurityContextHolder.clearContext();
 
