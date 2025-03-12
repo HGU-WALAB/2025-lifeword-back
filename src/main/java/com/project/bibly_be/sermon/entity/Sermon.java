@@ -1,5 +1,4 @@
 package com.project.bibly_be.sermon.entity;
-
 import com.project.bibly_be.user.entity.User;
 import lombok.*;
 import javax.persistence.*;
@@ -60,9 +59,6 @@ public class Sermon {
 
     @Column(nullable = false, unique = true)
     private String fileCode;
-
-    @OneToMany(mappedBy = "sermon", cascade = CascadeType.ALL, orphanRemoval = true) 
-    private List<Content> contents;
 
     @PrePersist
     public void prePersist() {

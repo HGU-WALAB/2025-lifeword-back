@@ -26,41 +26,40 @@ public class SermonController {
     private final SermonService sermonService;
     private final UserRepository userRepository;
 
-
-
     // GET all public sermons
-//    @Operation(summary = "public 되어있는 설교 다 불러오기 룰루 ( SermonPublicList ) ")
-//    @GetMapping("/publiclist")
-//    public List<SermonResponseDTO> getAllPublicSermons() {
-//        return sermonService.getAllPublicSermons();
-//    }
-//
-    @Operation(summary =  "Admin 용 모든 설교 불러오그 (private & public) ")
+    // @Operation(summary = "public 되어있는 설교 다 불러오기 룰루 ( SermonPublicList ) ")
+    // @GetMapping("/publiclist")
+    // public List<SermonResponseDTO> getAllPublicSermons() {
+    // return sermonService.getAllPublicSermons();
+    // }
+    //
+    @Operation(summary = "Admin 용 모든 설교 불러오그 (private & public) ")
     @GetMapping("/admin/list")
     public List<SermonResponseDTO> findAllWithOwner() {
         return sermonService.getAllSermons();
     }
 
-//    @Operation(summary = "유저별 sermons list all, private, public! ( UserSermonList ) ")
-//    @GetMapping("/user/list")
-//    public List<SermonResponseDTO> getUserSermons(
-//            @RequestParam("userId") String userId,
-//            @RequestParam("option") String option) {
-//        switch (option.toLowerCase()) {
-//            case "all":
-//                return sermonService.getAllSermonsByUser(userId);
-//            case "private":
-//                return sermonService.getPrivateSermons(userId);
-//            case "public":
-//                return sermonService.getPublicSermonsByUser(userId);
-//            default:
-//                throw new IllegalArgumentException("Invalid option. Valid options are: all, private, public.");
-//        }
-//    }
-
+    // @Operation(summary = "유저별 sermons list all, private, public! ( UserSermonList
+    // ) ")
+    // @GetMapping("/user/list")
+    // public List<SermonResponseDTO> getUserSermons(
+    // @RequestParam("userId") String userId,
+    // @RequestParam("option") String option) {
+    // switch (option.toLowerCase()) {
+    // case "all":
+    // return sermonService.getAllSermonsByUser(userId);
+    // case "private":
+    // return sermonService.getPrivateSermons(userId);
+    // case "public":
+    // return sermonService.getPublicSermonsByUser(userId);
+    // default:
+    // throw new IllegalArgumentException("Invalid option. Valid options are: all,
+    // private, public.");
+    // }
+    // }
 
     // Get details of a specific sermon
-    @Operation(summary = " 선택한 설교 details 페이지 contents 도 보내드림 ( SermonDetails )")
+    @Operation(summary = " 선택한 설교 details ( SermonDetails )")
     @GetMapping("/details/{sermonId}")
     public SermonResponseDTO getSermonDetails(@PathVariable Long sermonId) {
         return sermonService.getSermonDetails(sermonId); // <--- UUID 추가
@@ -88,13 +87,11 @@ public class SermonController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PatchMapping("/update/{sermonId}")
-    public SermonResponseDTO updateSermonAndContent(@PathVariable Long sermonId,
-                                                    @RequestParam("userId") String loggedInUserId,
-                                                    @RequestBody SermonRequestDTO requestDTO) {
-        return sermonService.updateSermonAndContent(sermonId, loggedInUserId, requestDTO);
+    public SermonResponseDTO updateSermon(@PathVariable Long sermonId,
+            @RequestParam("userId") String loggedInUserId,
+            @RequestBody SermonRequestDTO requestDTO) {
+        return sermonService.updateSermon(sermonId, loggedInUserId, requestDTO);
     }
-
-
 
     // DELETE sermon
     @Operation(summary = "설교 삭제. 낄낄 PATCH 과 같이 로그인된 유저 아디도 보내주셈( DeleteSermon ) ")
@@ -106,7 +103,7 @@ public class SermonController {
     })
     @DeleteMapping("/{sermonId}")
     public void deleteSermon(@PathVariable Long sermonId,
-                             @RequestParam("userId") String loggedInUserId) {
+            @RequestParam("userId") String loggedInUserId) {
         sermonService.deleteSermon(sermonId, loggedInUserId);
     }
 
@@ -116,25 +113,31 @@ public class SermonController {
         return sermonService.searchSermons(keyword);
     }
 
-//    @Operation(summary = "필터링된 설교 목록 가져오기", description = "정렬, 예배 유형, 작성자(이름으로), 날짜 범위를 기준으로 필터링하여 설교 목록을 반환")
-//    @GetMapping("/filtered-list")
-//    public List<SermonResponseDTO> getFilteredSermons(
-//            @RequestParam(value = "sort", defaultValue = "desc") String sortOrder,
-//            @RequestParam(value = "worshipType", defaultValue = "all") String worshipType,
-//            @RequestParam(value = "startDate", required = false) String startDate,
-//            @RequestParam(value = "endDate", required = false) String endDate,
-//            @RequestParam(value = "scripture", required = false) String scripture
-//    ) {
-//        return sermonService.getFilteredSermons(sortOrder, worshipType, startDate, endDate,scripture);
-//    }
+    // @Operation(summary = "필터링된 설교 목록 가져오기", description = "정렬, 예배 유형, 작성자(이름으로),
+    // 날짜 범위를 기준으로 필터링하여 설교 목록을 반환")
+    // @GetMapping("/filtered-list")
+    // public List<SermonResponseDTO> getFilteredSermons(
+    // @RequestParam(value = "sort", defaultValue = "desc") String sortOrder,
+    // @RequestParam(value = "worshipType", defaultValue = "all") String
+    // worshipType,
+    // @RequestParam(value = "startDate", required = false) String startDate,
+    // @RequestParam(value = "endDate", required = false) String endDate,
+    // @RequestParam(value = "scripture", required = false) String scripture
+    // ) {
+    // return sermonService.getFilteredSermons(sortOrder, worshipType, startDate,
+    // endDate,scripture);
+    // }
 
-    @Operation(summary = "필터링 설교 목록 User Page", description = "page 는 1 부터 시작 , keyword (null 은 모든 검색) 1. 작성자 검색 → 2. 제목 검색 → 3. 본문 검색 \n" +
-            "//유저아이디 (UUID) 필수 , 정렬( desc = 최신순 (default), asc =  오래된순 , recent =  최근 수정), 예배 유형(default = null (empty)),\n" +
-            " page 페이지 오프셋 , size 한 페이지에 들어갈 설교 수, 모드 (0 = 공개 설교 (default) , 1 = 내 전체 설교, 2 = 내 공개 설교, 3 = 내 비공개 설교) \n" +
+    @Operation(summary = "필터링 설교 목록 User Page", description = "page 는 1 부터 시작 , keyword (null 은 모든 검색) 1. 작성자 검색 → 2. 제목 검색 → 3. 본문 검색 \n"
+            +
+            "//유저아이디 (UUID) 필수 , 정렬( desc = 최신순 (default), asc =  오래된순 , recent =  최근 수정), 예배 유형(default = null (empty)),\n"
+            +
+            " page 페이지 오프셋 , size 한 페이지에 들어갈 설교 수, 모드 (0 = 공개 설교 (default) , 1 = 내 전체 설교, 2 = 내 공개 설교, 3 = 내 비공개 설교) \n"
+            +
             "// page = 1, size = 10 (default)       날짜 범위를 기준으로 필터링하여 설교 목록을 반환.totalPage = 총 페이지수 반환")
     @GetMapping("/filtered-list-user")
     public SermonResponsePageDTO getFilteredSermonsPage(
-            @RequestParam(value = "keyword",required = false) String keyword,
+            @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "user_id", required = true) UUID userId,
             @RequestParam(value = "sort", defaultValue = "desc") String sortOrder,
             @RequestParam(value = "worshipType", required = false) List<String> worshipType,
@@ -143,12 +146,10 @@ public class SermonController {
             @RequestParam(value = "scripture", required = false) List<String> scripture,
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
-            @RequestParam(value = "mode", defaultValue = "0") int mode
-    ) {
-        return sermonService.searchSermonFilterUser(keyword,userId,sortOrder, worshipType, startDate, endDate,scripture,page, size,mode);
+            @RequestParam(value = "mode", defaultValue = "0") int mode) {
+        return sermonService.searchSermonFilterUser(keyword, userId, sortOrder, worshipType, startDate, endDate,
+                scripture, page, size, mode);
     }
-
-
 
     @Operation(summary = "필터링 설교 목록 관리자용 Page", description = "page 는 1 부터 시작 " +
             "  keyword (null 은 모든 검색) " +
@@ -165,9 +166,9 @@ public class SermonController {
             @RequestParam(value = "endDate", required = false) String endDate,
             @RequestParam(value = "scripture", required = false) List<String> scripture,
             @RequestParam(value = "page", defaultValue = "1") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size
-    ) {
-        return sermonService.searchSermonsFiltered(keyword,sortOrder, worshipType, startDate, endDate,scripture,page, size);
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+        return sermonService.searchSermonsFiltered(keyword, sortOrder, worshipType, startDate, endDate, scripture, page,
+                size);
     }
 
 }
