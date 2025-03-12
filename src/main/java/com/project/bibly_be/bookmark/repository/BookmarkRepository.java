@@ -20,13 +20,13 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
 
     @Query("SELECT b FROM Bookmark b " +
             "LEFT JOIN FETCH b.sermon s " +
-            "LEFT JOIN FETCH s.contents " +
+            //"LEFT JOIN FETCH s.contents " +
             "WHERE b.user = :user")
     List<Bookmark> findAllByUser(@Param("user") User user);
 
     @Query("SELECT b FROM Bookmark b " +
             "LEFT JOIN FETCH b.sermon s " +
-            "LEFT JOIN FETCH s.contents " +
+            //"LEFT JOIN FETCH s.contents " +
             "WHERE b.user = :user AND b.isSermon = true")
     List<Bookmark> findAllWithSermonContentsByUser(@Param("user") User user);
 
