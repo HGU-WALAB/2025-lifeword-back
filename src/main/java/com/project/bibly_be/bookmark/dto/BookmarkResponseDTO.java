@@ -1,7 +1,6 @@
 package com.project.bibly_be.bookmark.dto;
 
 import com.project.bibly_be.bookmark.entity.Bookmark;
-import com.project.bibly_be.sermon.entity.Content;
 import com.project.bibly_be.sermon.entity.Sermon;
 import lombok.Builder;
 import lombok.Getter;
@@ -40,7 +39,6 @@ public class BookmarkResponseDTO {
     private String notes;
     private String recordInfo;
     private String fileCode;
-    private List<String> contents;
 
     public static BookmarkResponseDTO from(Bookmark bookmark) {
         if (bookmark.getIsSermon()) {
@@ -61,9 +59,6 @@ public class BookmarkResponseDTO {
                     .notes(sermon.getNotes())
                     .recordInfo(sermon.getRecordInfo())
                     .fileCode(sermon.getFileCode())
-                    .contents(sermon.getContents().stream()
-                            .map(Content::getContentText)
-                            .collect(Collectors.toList()))
                     .createdAt(bookmark.getCreatedAt())
                     .build();
         } else {

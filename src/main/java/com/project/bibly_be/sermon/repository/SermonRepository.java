@@ -38,11 +38,12 @@ public interface SermonRepository extends JpaRepository<Sermon, Long>, JpaSpecif
     @Query("SELECT s FROM Sermon s WHERE LOWER(s.sermonTitle) LIKE LOWER(CONCAT('%', :keyword, '%')) ORDER BY s.sermonId DESC")
     List<Sermon> searchBySermonTitle(@Param("keyword") String keyword);
 
+    /*
     @Query("SELECT DISTINCT s FROM Sermon s LEFT JOIN s.contents c WHERE " +
             "(LOWER(s.sermonTitle) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(c.contentText) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
             "ORDER BY s.sermonId DESC")
     List<Sermon> searchBySermonTitleOrContent(@Param("keyword") String keyword);
-
+    */
 
 
 

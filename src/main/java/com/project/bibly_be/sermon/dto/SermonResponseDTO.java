@@ -26,7 +26,7 @@ public class SermonResponseDTO {
     private String notes;
     private String recordInfo;
     private String fileCode;
-    private List<ContentDTO> contents;
+    //private List<ContentDTO> contents;
     //bookmarked (if sermon.userId == userId )-> true else false;
     private boolean bookmarked;
     private Long textCount;
