@@ -1,13 +1,10 @@
 package com.project.bibly_be.sermon.service;
 
 import com.project.bibly_be.bookmark.repository.BookmarkRepository;
-import com.project.bibly_be.sermon.dto.ContentDTO;
 import com.project.bibly_be.sermon.dto.SermonRequestDTO;
 import com.project.bibly_be.sermon.dto.SermonResponseDTO;
 import com.project.bibly_be.sermon.dto.SermonResponsePageDTO;
-import com.project.bibly_be.sermon.entity.Content;
 import com.project.bibly_be.sermon.entity.Sermon;
-import com.project.bibly_be.sermon.repository.ContentRepository;
 import com.project.bibly_be.sermon.repository.SermonRepository;
 import com.project.bibly_be.sermon.specification.SermonSpecification;
 import com.project.bibly_be.sermon.util.ScriptureUtil;
@@ -21,10 +18,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 
 import java.time.LocalDate;
@@ -38,7 +33,6 @@ import java.util.stream.Collectors;
 @Transactional
 public class SermonService {
     private final SermonRepository sermonRepository;
-    private final ContentRepository contentRepository;
     private final UserRepository userRepository;
     private final ReturnTypeParser returnTypeParser;
     private final BookmarkRepository bookmarkRepository;
@@ -73,14 +67,7 @@ public class SermonService {
 
         Sermon savedSermon = sermonRepository.save(sermon);
 
-        // CREATE and SAVE the Content
-        Content content = Content.builder()
-                .sermon(savedSermon)
-                .fileCode(fileCode)
-                .contentText(requestDTO.getContentText())
-                .build();
 
-        contentRepository.save(content);
         
         return SermonResponseDTO.builder()
                 .sermonId(savedSermon.getSermonId())
@@ -174,6 +161,7 @@ public class SermonService {
         Sermon sermon = sermonRepository.findById(sermonId)
                 .orElseThrow(() -> new IllegalArgumentException("Sermon not found"));
 
+        /*
         List<ContentDTO> contents = sermon.getContents().stream()
                 .map(content -> ContentDTO.builder()
                         .contentId(content.getContentId())
@@ -181,6 +169,8 @@ public class SermonService {
                         .contentText(content.getContentText())
                         .build())
                 .collect(Collectors.toList());
+
+                */
 
         return SermonResponseDTO.builder()
                 .sermonId(sermon.getSermonId())
@@ -198,13 +188,13 @@ public class SermonService {
                 .notes(sermon.getNotes())
                 .recordInfo(sermon.getRecordInfo())
                 .fileCode(sermon.getFileCode())
-                .contents(contents)
+                //.contents(contents)
                 .build();
     }
 
     // PATCH a sermon
     @Transactional
-    public SermonResponseDTO updateSermonAndContent(Long sermonId, String loggedInUserId, SermonRequestDTO requestDTO) {
+    public SermonResponseDTO updateSermon(Long sermonId, String loggedInUserId, SermonRequestDTO requestDTO) {
         // Fetch the sermon by ID
         Sermon sermon = sermonRepository.findById(sermonId)
                 .orElseThrow(() -> new IllegalArgumentException("Sermon not found"));
@@ -225,13 +215,6 @@ public class SermonService {
         sermon.setRecordInfo(requestDTO.getRecordInfo());
         sermon.setPublic(requestDTO.isPublic());
 
-        // Fetch content and update
-        Content content = sermon.getContents().stream()
-                .findFirst() // Assuming 1-to-1 relation between Sermon and Content
-                .orElseThrow(() -> new IllegalArgumentException("Content not found for this sermon"));
-
-        content.setContentText(requestDTO.getContentText());
-        contentRepository.save(content);
 
         Sermon updatedSermon = sermonRepository.save(sermon);
 
@@ -272,7 +255,7 @@ public class SermonService {
         }
 
         // 본문 내용으로 검색 (작성자 & 제목이 없을 경우)
-        results = sermonRepository.searchBySermonTitleOrContent(keyword);
+        //results = sermonRepository.searchBySermonTitleOrContent(keyword);
 
         return results.stream()
                 .map(this::mapToSermonResponseDTO)
@@ -285,6 +268,7 @@ public class SermonService {
 
     // Utility to map Sermon to SermonResponseDTO
     private SermonResponseDTO mapToSermonResponseDTO(Sermon sermon) {
+        /*
         List<ContentDTO> contents = sermon.getContents() != null
                 ? sermon.getContents().stream()
                 .map(content -> ContentDTO.builder()
@@ -294,6 +278,7 @@ public class SermonService {
                         .build())
                 .collect(Collectors.toList())
                 : Collections.emptyList();
+         */
 
         Long textCount = textRepository.countBySermonId(sermon.getSermonId());
         return SermonResponseDTO.builder()
@@ -312,7 +297,7 @@ public class SermonService {
                 .notes(sermon.getNotes())
                 .recordInfo(sermon.getRecordInfo())
                 .fileCode(sermon.getFileCode())
-                .contents(contents)
+                //.contents(contents)
                 .textCount(textCount)
                 .build();
     }
