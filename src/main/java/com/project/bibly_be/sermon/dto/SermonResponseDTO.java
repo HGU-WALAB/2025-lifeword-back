@@ -1,6 +1,8 @@
 package com.project.bibly_be.sermon.dto;
 
 import com.project.bibly_be.sermon.entity.Sermon;
+import com.project.bibly_be.text.dto.TextContentDTO;
+import com.project.bibly_be.text.dto.TextResponse;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -27,6 +29,7 @@ public class SermonResponseDTO {
     private String recordInfo;
     private String fileCode;
     //private List<ContentDTO> contents;
+    private Long contentTextId;
     //bookmarked (if sermon.userId == userId )-> true else false;
     private boolean bookmarked;
     private Long textCount;
