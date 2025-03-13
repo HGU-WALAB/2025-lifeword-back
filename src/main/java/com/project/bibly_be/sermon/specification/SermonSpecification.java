@@ -1,6 +1,7 @@
 package com.project.bibly_be.sermon.specification;
 
 import com.project.bibly_be.sermon.entity.Sermon;
+import com.project.bibly_be.text.entity.Text;
 import org.springframework.data.jpa.domain.Specification;
 
 import javax.persistence.criteria.*;
@@ -117,7 +118,28 @@ public class SermonSpecification {
 
             // keyword 조건: 작성자 이름, 설교 제목, 설교 요약, 컨텐츠 내용에 대해 OR 조건
             // 컨텐츠 내용을 검색하기 위해 LEFT JOIN 추가
-            Join<Sermon, ?> contentJoin = root.join("contents", JoinType.LEFT);
+            //Join<Sermon, ?> contentJoin = root.join("contents", JoinType.LEFT);
+
+            Join<Sermon, Text> textJoin = root.join("texts", JoinType.LEFT);
+
+            // 서브쿼리를 사용해, 현재 sermon에 속하는 isDraft=false인 Text들 중 최소 text_id를 구합니다.
+            Subquery<Long> minTextIdSubquery = query.subquery(Long.class);
+            Root<Text> subRoot = minTextIdSubquery.from(Text.class);
+            minTextIdSubquery.select(cb.min(subRoot.get("id")));
+            minTextIdSubquery.where(
+                    cb.equal(subRoot.get("sermon"), root),   // 현재 sermon과 일치
+                    cb.isFalse(subRoot.get("isDraft"))         // isDraft가 false인 경우
+            );
+
+            // JOIN 후 조건으로, textJoin의 isDraft가 false이고, text_id가 서브쿼리의 값과 같은 것만 선택합니다.
+            Predicate textJoinCondition = cb.and(
+                    cb.isFalse(textJoin.get("isDraft")),
+                    cb.equal(textJoin.get("id"), minTextIdSubquery)
+            );
+
+            predicates.add(textJoinCondition);
+
+
 
             if (keyword != null && !keyword.trim().isEmpty()) {
                 String pattern = "%" + keyword.toLowerCase() + "%";
@@ -125,7 +147,7 @@ public class SermonSpecification {
                         cb.like(cb.lower(root.get("owner").get("name")), pattern),
                         cb.like(cb.lower(root.get("sermonTitle")), pattern),
                         cb.like(cb.lower(root.get("summary")), pattern),
-                        cb.like(cb.lower(contentJoin.get("contentText")), pattern)
+                        cb.like(cb.lower(textJoin.get("textContent")), pattern)
                 );
                 predicates.add(keywordPredicate);
 
@@ -138,7 +160,7 @@ public class SermonSpecification {
                             .when(cb.equal(cb.lower(root.get("owner").get("name")), keyword.toLowerCase()), 1)
                             .when(cb.equal(cb.lower(root.get("sermonTitle")), keyword.toLowerCase()), 2)
                             .when(cb.equal(cb.lower(root.get("summary")), keyword.toLowerCase()), 3)
-                            .when(cb.equal(cb.lower(contentJoin.get("contentText")), keyword.toLowerCase()), 4)
+                            .when(cb.equal(cb.lower(textJoin.get("textContent")), keyword.toLowerCase()), 4)
                             .otherwise(5);
                     // 오름차순 정렬하면 우선순위가 낮은 값이 먼저 나옵니다.
                     query.orderBy(cb.asc(orderPriority));
