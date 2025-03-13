@@ -8,6 +8,9 @@ import com.project.bibly_be.sermon.entity.Sermon;
 import com.project.bibly_be.sermon.repository.SermonRepository;
 import com.project.bibly_be.sermon.specification.SermonSpecification;
 import com.project.bibly_be.sermon.util.ScriptureUtil;
+import com.project.bibly_be.text.dto.TextContentDTO;
+import com.project.bibly_be.text.dto.TextResponse;
+import com.project.bibly_be.text.entity.Text;
 import com.project.bibly_be.text.repository.TextRepository;
 import com.project.bibly_be.user.entity.User;
 import com.project.bibly_be.user.repository.UserRepository;
@@ -161,16 +164,11 @@ public class SermonService {
         Sermon sermon = sermonRepository.findById(sermonId)
                 .orElseThrow(() -> new IllegalArgumentException("Sermon not found"));
 
-        /*
-        List<ContentDTO> contents = sermon.getContents().stream()
-                .map(content -> ContentDTO.builder()
-                        .contentId(content.getContentId())
-                        .fileCode(content.getFileCode())
-                        .contentText(content.getContentText())
-                        .build())
-                .collect(Collectors.toList());
+        Text contentText = textRepository.findTextContent(sermon.getSermonId());
+        //TextContentDTO textDto = TextContentDTO.from(contentText);
+        Long textId = contentText!=null ? contentText.getId() : null;
 
-                */
+
 
         return SermonResponseDTO.builder()
                 .sermonId(sermon.getSermonId())
@@ -189,6 +187,7 @@ public class SermonService {
                 .recordInfo(sermon.getRecordInfo())
                 .fileCode(sermon.getFileCode())
                 //.contents(contents)
+                .contentTextId(textId)
                 .build();
     }
 
@@ -256,6 +255,7 @@ public class SermonService {
 
         // 본문 내용으로 검색 (작성자 & 제목이 없을 경우)
         //results = sermonRepository.searchBySermonTitleOrContent(keyword);
+        results = textRepository.findSermonByKeyword(keyword);
 
         return results.stream()
                 .map(this::mapToSermonResponseDTO)
@@ -279,6 +279,18 @@ public class SermonService {
                 .collect(Collectors.toList())
                 : Collections.emptyList();
          */
+        List<TextResponse> texts = sermon.getTexts() != null
+                ? sermon.getTexts().stream()
+                .map(text-> new TextResponse())
+                .collect(Collectors.toList()) : Collections.emptyList();
+
+
+        Text contentText = textRepository.findTextContent(sermon.getSermonId());
+        //TextContentDTO textDto = TextContentDTO.from(contentText);
+        Long textId = contentText!=null ? contentText.getId() : null;
+
+
+
 
         Long textCount = textRepository.countBySermonId(sermon.getSermonId());
         return SermonResponseDTO.builder()
@@ -298,6 +310,7 @@ public class SermonService {
                 .recordInfo(sermon.getRecordInfo())
                 .fileCode(sermon.getFileCode())
                 //.contents(contents)
+                .contentTextId(textId)
                 .textCount(textCount)
                 .build();
     }

@@ -62,7 +62,9 @@ public class Sermon {
     private String fileCode;
 
     @OneToMany(mappedBy = "sermon", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OrderBy("id ASC")
     private List<Text> texts;
+
 
     @PrePersist
     public void prePersist() {
