@@ -70,24 +70,11 @@ public class SermonService {
 
         Sermon savedSermon = sermonRepository.save(sermon);
 
-
-        
-        return SermonResponseDTO.builder()
-                .sermonId(savedSermon.getSermonId())
-                .ownerName(savedSermon.getOwner().getName())
-                .sermonDate(savedSermon.getSermonDate())
-                .createdAt(savedSermon.getCreatedAt())
-                .updatedAt(savedSermon.getUpdatedAt())
-                .isPublic(savedSermon.isPublic())
-                .worshipType(savedSermon.getWorshipType())
-                .mainScripture(savedSermon.getMainScripture())
-                .additionalScripture(savedSermon.getAdditionalScripture())
-                .sermonTitle(savedSermon.getSermonTitle())
-                .summary(savedSermon.getSummary())
-                .notes(savedSermon.getNotes())
-                .recordInfo(savedSermon.getRecordInfo())
-                .fileCode(savedSermon.getFileCode())
-                .build();
+        boolean isBookmarked = false;
+        Long textCount = textRepository.countBySermonId(savedSermon.getSermonId());
+        Text contentText = textRepository.findTextContent(sermon.getSermonId());
+        Long textId = contentText!=null ? contentText.getId() : null;
+        return SermonResponseDTO.from(savedSermon, isBookmarked, textCount,textId);
     }
 
     private String generateUniqueFileCode(LocalDate sermonDate) {
@@ -165,30 +152,32 @@ public class SermonService {
                 .orElseThrow(() -> new IllegalArgumentException("Sermon not found"));
 
         Text contentText = textRepository.findTextContent(sermon.getSermonId());
-        //TextContentDTO textDto = TextContentDTO.from(contentText);
         Long textId = contentText!=null ? contentText.getId() : null;
 
 
+        boolean isBookmarked = false;
+        Long textCount = textRepository.countBySermonId(sermon.getSermonId());
+        return SermonResponseDTO.from(sermon, isBookmarked, textCount,textId);
 
-        return SermonResponseDTO.builder()
-                .sermonId(sermon.getSermonId())
-                .ownerName(sermon.getOwner().getName())
-                .userId(sermon.getOwner().getId()) // user's UUID -> userId :
-                .sermonDate(sermon.getSermonDate())
-                .createdAt(sermon.getCreatedAt())
-                .updatedAt(sermon.getUpdatedAt())
-                .isPublic(sermon.isPublic())
-                .worshipType(sermon.getWorshipType())
-                .mainScripture(sermon.getMainScripture())
-                .additionalScripture(sermon.getAdditionalScripture())
-                .sermonTitle(sermon.getSermonTitle())
-                .summary(sermon.getSummary())
-                .notes(sermon.getNotes())
-                .recordInfo(sermon.getRecordInfo())
-                .fileCode(sermon.getFileCode())
-                //.contents(contents)
-                .contentTextId(textId)
-                .build();
+//        return SermonResponseDTO.builder()
+//                .sermonId(sermon.getSermonId())
+//                .ownerName(sermon.getOwner().getName())
+//                .userId(sermon.getOwner().getId()) // user's UUID -> userId :
+//                .sermonDate(sermon.getSermonDate())
+//                .createdAt(sermon.getCreatedAt())
+//                .updatedAt(sermon.getUpdatedAt())
+//                .isPublic(sermon.isPublic())
+//                .worshipType(sermon.getWorshipType())
+//                .mainScripture(sermon.getMainScripture())
+//                .additionalScripture(sermon.getAdditionalScripture())
+//                .sermonTitle(sermon.getSermonTitle())
+//                .summary(sermon.getSummary())
+//                .notes(sermon.getNotes())
+//                .recordInfo(sermon.getRecordInfo())
+//                .fileCode(sermon.getFileCode())
+//                //.contents(contents)
+//                .contentTextId(textId)
+//                .build();
     }
 
     // PATCH a sermon
@@ -374,20 +363,12 @@ public class SermonService {
         Page<SermonResponseDTO> pageDTO = result.map(sermon -> {
             boolean isBookmarked = bookmarkRepository.existsByUserAndSermon(user, sermon);
             Long textCount = textRepository.countBySermonIdWithIsDraft(sermon.getSermonId(),userId);
-            return SermonResponseDTO.from(sermon, isBookmarked, textCount);
+            Text contentText = textRepository.findTextContent(sermon.getSermonId());
+            Long textId = contentText!=null ? contentText.getId() : null;
+            return SermonResponseDTO.from(sermon, isBookmarked, textCount,textId);
         });
 
         return SermonResponsePageDTO.fromPage(pageDTO);
-//        Page<SermonResponseDTO> pageDTO = result.map(sermon -> {
-//            // 각 sermon마다 북마크 여부를 판단
-//
-//            boolean isBookmarked = bookmarkRepository.existsByUserAndSermon(user, sermon);
-//            // 2번 방법으로 DTO 변환 (추가 파라미터 전달)
-//            return SermonResponseDTO.from(sermon, isBookmarked);
-//        });
-//
-//
-//        return SermonResponsePageDTO.fromPage(result.map(this::mapToSermonResponseDTO));
     }
 
 
@@ -429,7 +410,9 @@ public class SermonService {
         Page<SermonResponseDTO> pageDTO = result.map(sermon -> {
             boolean isBookmarked = false;
             Long textCount = textRepository.countBySermonId(sermon.getSermonId());
-            return SermonResponseDTO.from(sermon, isBookmarked, textCount);
+            Text contentText = textRepository.findTextContent(sermon.getSermonId());
+            Long textId = contentText!=null ? contentText.getId() : null;
+            return SermonResponseDTO.from(sermon, isBookmarked, textCount,textId);
         });
         return SermonResponsePageDTO.fromPage(result.map(this::mapToSermonResponseDTO));
     }
