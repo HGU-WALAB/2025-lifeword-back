@@ -34,7 +34,7 @@ public class SermonResponseDTO {
     private boolean bookmarked;
     private Long textCount;
 
-    public static SermonResponseDTO from(Sermon sermon, boolean bookmarked, Long textCount) {
+    public static SermonResponseDTO from(Sermon sermon, boolean bookmarked, Long textCount, Long contentTextId) {
         return SermonResponseDTO.builder()
                 .sermonId(sermon.getSermonId())
                 .ownerName(sermon.getOwner().getName())
@@ -52,6 +52,7 @@ public class SermonResponseDTO {
                 .fileCode(sermon.getFileCode())
                 .bookmarked(bookmarked)
                 .textCount(textCount)
+                .contentTextId(contentTextId)
                 .build();
     }
 
