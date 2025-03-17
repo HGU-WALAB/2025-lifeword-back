@@ -132,11 +132,14 @@ public class SermonSpecification {
             );
 
             // JOIN 후 조건으로, textJoin의 isDraft가 false이고, text_id가 서브쿼리의 값과 같은 것만 선택합니다.
-            Predicate textJoinCondition = cb.and(
-                    cb.isFalse(textJoin.get("isDraft")),
-                    cb.equal(textJoin.get("id"), minTextIdSubquery)
+            //만약 text가 존재하면 해당 조건을 적용하고, text가 존재하지 않는 경우에도 해당 sermon이 검색 결과에 포함되게 할 수 있음
+            Predicate textJoinCondition = cb.or(
+                    cb.and(
+                            cb.isFalse(textJoin.get("isDraft")),
+                            cb.equal(textJoin.get("id"), minTextIdSubquery)
+                    ),
+                    cb.isNull(textJoin.get("id"))
             );
-
             predicates.add(textJoinCondition);
 
 
