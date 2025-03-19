@@ -70,10 +70,22 @@ public class SermonService {
 
         Sermon savedSermon = sermonRepository.save(sermon);
 
+        // Create Text
+        Text text = Text.builder()
+                .sermon(savedSermon)
+                .user(user)
+                .textTitle(sermon.getSermonTitle())
+                .isDraft(false) // first ver should always be draft = false
+                .textContent(requestDTO.getContentText())
+                .build();
+
+        Text savedText = textRepository.save(text);
+
         boolean isBookmarked = false;
         Long textCount = textRepository.countBySermonId(savedSermon.getSermonId());
         Text contentText = textRepository.findTextContent(sermon.getSermonId());
         Long textId = contentText!=null ? contentText.getId() : null;
+        if(textId != savedText.getId()) { textId  = (long) -1;} // error
         return SermonResponseDTO.from(savedSermon, isBookmarked, textCount,textId);
     }
 
