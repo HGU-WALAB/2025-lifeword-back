@@ -39,6 +39,8 @@ public class User {
     @Column(name = "password")
     private String password;
 
+    @Column(name="is_admin")
+    private Boolean isAdmin;
 
     @Enumerated(EnumType.STRING)
     @Column(name="role")
@@ -71,10 +73,11 @@ public class User {
     private List<Bookmark> bookmarks;
 
     @Builder
-    public User(String oauthProvider, String oauthUid, Role role, String password, String email, String name, String contact,String church, String job, String place) {
+    public User(String oauthProvider, String oauthUid, Role role, String password, String email, String name, String contact,String church, String job, String place,Boolean isAdmin) {
         this.id = UUID.randomUUID();
         this.oauthProvider = oauthProvider;
         this.oauthUid = oauthUid;
+        this.isAdmin=isAdmin;
         this.email = email;
         this.password =password;
         this.role=role;
