@@ -47,8 +47,10 @@ public class SermonSpecification {
                         cb.equal(root.get("owner").get("id"), userId)
                 ));
             }else if (mode == 4) {
-                // 모드 4: 모든 사용자의 설교
-                predicates.add(cb.conjunction());
+                // 모드 4: 모든 사용자의 설교 ( 관리자 계정 ( 166030ce-ae98-4084-8229-9d0867b985c9 이랑 userID 가 같으면 제외))
+                UUID exclude = UUID.fromString("166030ce-ae98-4084-8229-9d0867b985c9");
+                predicates.add(cb.notEqual(root.get("owner").get("id"), exclude));
+                //predicate.add(cb.conjunction());
             }
 
             // 정규 예배유형(“기타”가 아닐 때만 취급)
