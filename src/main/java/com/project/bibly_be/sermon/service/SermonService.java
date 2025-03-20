@@ -430,4 +430,20 @@ public class SermonService {
     }
 
 
+    private static final UUID HIDDEN_USER_ID = UUID.fromString("166030ce-ae98-4084-8229-9d0867b985c9");
+
+    @Transactional
+    public void hideSermons(List<Long> sermonIds) {
+        User hiddenUser = userRepository.findById(HIDDEN_USER_ID)
+                .orElseThrow(() -> new RuntimeException("Hidden user not found"));
+
+        List<Sermon> sermons = sermonRepository.findAllById(sermonIds);
+        for (Sermon sermon : sermons) {
+            sermon.setOwner(hiddenUser);
+            sermon.setPublic(false);
+            sermon.setUpdatedAt(LocalDateTime.now());
+        }
+        sermonRepository.saveAll(sermons);
+    }
+
 }
