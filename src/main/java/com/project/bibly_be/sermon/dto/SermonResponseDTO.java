@@ -38,6 +38,7 @@ public class SermonResponseDTO {
         return SermonResponseDTO.builder()
                 .sermonId(sermon.getSermonId())
                 .ownerName(sermon.getOwner().getName())
+                .userId(sermon.getOwner().getId())
                 .sermonDate(sermon.getSermonDate())
                 .createdAt(sermon.getCreatedAt())
                 .updatedAt(sermon.getUpdatedAt())
