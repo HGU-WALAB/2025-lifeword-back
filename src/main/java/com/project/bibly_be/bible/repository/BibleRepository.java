@@ -20,12 +20,23 @@ public interface BibleRepository extends JpaRepository<Bible, Long> {
 
     @Query("SELECT b FROM Bible b WHERE b.sentence LIKE %:keyword%")
     List<Bible> searchByVerse(@Param("keyword") String keyword);
+
     @Query("SELECT b FROM Bible b WHERE b.longLabel = :keyword OR b.shortLabel = :keyword")
     List<Bible> findByTestamentOrBook(@Param("keyword") String keyword);
 
-    @Query("SELECT b FROM Bible b WHERE b.sentence LIKE %:keyword1% OR b.sentence LIKE %:keyword2%")
-    List<Bible> searchByVerseWithOr(@Param("keyword1") String keyword1, @Param("keyword2") String keyword2);
+    /**
+     * AND 검색: 입력된 모든 키워드가 포함된 구절 찾기
+     */
+    @Query("SELECT b FROM Bible b WHERE " +
+            "(:keyword1 IS NULL OR LOWER(b.sentence) LIKE LOWER(CONCAT('%', :keyword1, '%'))) " +
+            "AND (:keyword2 IS NULL OR LOWER(b.sentence) LIKE LOWER(CONCAT('%', :keyword2, '%')))")
+    List<Bible> searchByAllWords(@Param("keyword1") String keyword1, @Param("keyword2") String keyword2);
 
-    @Query("SELECT b FROM Bible b WHERE b.sentence LIKE %:keyword1% AND b.sentence LIKE %:keyword2%")
-    List<Bible> searchByVerseWithAnd(@Param("keyword1") String keyword1, @Param("keyword2") String keyword2);
+    /**
+     * OR 검색: 입력된 키워드 중 하나라도 포함된 구절 찾기
+     */
+    @Query("SELECT b FROM Bible b WHERE " +
+            "LOWER(b.sentence) LIKE LOWER(CONCAT('%', :keyword1, '%')) " +
+            "OR LOWER(b.sentence) LIKE LOWER(CONCAT('%', :keyword2, '%'))")
+    List<Bible> searchByAnyWords(@Param("keyword1") String keyword1, @Param("keyword2") String keyword2);
 }

@@ -48,25 +48,15 @@ public class BibleService {
     public List<BibleResponseDTO> search(String keyword1) {
         List<Bible> searchResults;
 
-        // 쉼표 구분 검색 (예: "사랑, 하나님" 또는 "창 1,2")
-        if (keyword1.contains(",")) {
-            searchResults = handleCommaSeparatedInput(keyword1);
-        }
-        // "창세기 1장 1절" 등 특정 절 처리
-        else if (keyword1.matches("\\S+\\s*\\d+장\\s*\\d+절")) {
+        if (keyword1.matches("\\S+\\s*\\d+장\\s*\\d+절")) {
             searchResults = handleSpecificVerse(keyword1);
-        }
-        // 비정형 입력 (예: "창세기 1:1", "창세기 1장", "창세기 1장 1절~10절")
-        else if (keyword1.matches("\\S+\\s*\\d+[:장]\\s*\\d+.*|\\S+\\s*\\d+장.*")) {
+        } else if (keyword1.matches("\\S+\\s*\\d+[:장]\\s*\\d+.*|\\S+\\s*\\d+장.*")) {
             searchResults = parseReferenceAndSearch(keyword1);
-        }
-        // 특정 책 검색 (예: "창세기", "요한복음")
-        else if (bibleRepository.findFirstByShortLabelOrLongLabel(keyword1, keyword1).isPresent()) {
+        } else if (bibleRepository.findFirstByShortLabelOrLongLabel(keyword1, keyword1).isPresent()) {
             searchResults = bibleRepository.findByTestamentOrBook(keyword1);
-        }
-        // 단어 검색
-        else {
-            searchResults = bibleRepository.searchByVerse(keyword1);
+        } else {
+            // 쉼표가 포함된 경우에도 `searchByWordWithPriority()`를 호출하도록 변경
+            searchResults = searchByWordWithPriority(keyword1);
         }
 
         if (searchResults.isEmpty()) {
@@ -77,6 +67,45 @@ public class BibleService {
                 .map(BibleResponseDTO::from)
                 .collect(Collectors.toList());
     }
+
+    private List<Bible> searchByWordWithPriority(String keyword) {
+        String[] keywords = keyword.split("\\s*,\\s*"); // 쉼표 기준으로 키워드 분리
+
+        if (keywords.length == 1) {
+            return bibleRepository.searchByVerse(keyword); // 기존 단일 검색 로직 유지
+        }
+
+        // Step 1: AND 조건 필터링 (모든 키워드를 포함하는 구절)
+        List<Bible> andFilteredResults = bibleRepository.searchByAllWords(keywords[0], keywords.length > 1 ? keywords[1] : null);
+
+        // Step 2: OR 조건 필터링 (AND에서 찾은 구절을 제외한 나머지)
+        List<Bible> orFilteredResults = bibleRepository.searchByAnyWords(keywords[0], keywords.length > 1 ? keywords[1] : null);
+
+        // AND 결과를 제외한 OR 결과 필터링
+        orFilteredResults.removeAll(andFilteredResults);
+
+        // 최종 결과 리스트 (AND 먼저, OR 나중)
+        List<Bible> finalResults = new ArrayList<>();
+        finalResults.addAll(andFilteredResults);
+        finalResults.addAll(orFilteredResults);
+
+        //  검색 우선순위를 반영한 정렬 (idx 기준)
+        finalResults.sort((b1, b2) -> {
+            boolean isB1AndResult = andFilteredResults.contains(b1);
+            boolean isB2AndResult = andFilteredResults.contains(b2);
+
+            if (isB1AndResult && !isB2AndResult) {
+                return -1;
+            } else if (!isB1AndResult && isB2AndResult) {
+                return 1;
+            }
+
+            return Long.compare(b1.getIdx(), b2.getIdx());
+        });
+
+        return finalResults;
+    }
+
 
     private List<Bible> handleCommaSeparatedInput(String keyword) {
         String[] parts = keyword.split(",");
