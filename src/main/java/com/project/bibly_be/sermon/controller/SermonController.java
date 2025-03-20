@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -112,6 +113,15 @@ public class SermonController {
     public List<SermonResponseDTO> searchSermons(@RequestParam("keyword") String keyword) {
         return sermonService.searchSermons(keyword);
     }
+
+    // HIDE ( 삭제대신 숨김기능)
+    @Operation(summary = "삭제 대신 '숨김' 기능으로 사용", description = "프론트에서 보내주는 sermon Id 를 리스트로 받아서 뒤에서 알어서 처리해드림~")
+    @PatchMapping("/batch/hide")
+    public ResponseEntity<Void> hideSermons(@RequestBody List<Long> sermonIds) {
+        sermonService.hideSermons(sermonIds);
+        return ResponseEntity.ok().build();
+    }
+
 
     // @Operation(summary = "필터링된 설교 목록 가져오기", description = "정렬, 예배 유형, 작성자(이름으로),
     // 날짜 범위를 기준으로 필터링하여 설교 목록을 반환")
