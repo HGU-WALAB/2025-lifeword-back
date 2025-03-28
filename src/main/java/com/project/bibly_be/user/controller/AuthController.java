@@ -56,7 +56,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Google Authorization Code is required.");
         }
 
-        // ✅ Google OAuth 토큰 요청
+        // Google OAuth 토큰 요청
         String tokenUrl = "https://oauth2.googleapis.com/token";
         RestTemplate restTemplate = new RestTemplate();
 
@@ -64,7 +64,7 @@ public class AuthController {
         params.add("code", code);
         params.add("client_id", "925011581212-dk3lgg6dgktsourut3vo3ef1qi2ofg1c.apps.googleusercontent.com");
         params.add("client_secret", "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");
-        params.add("redirect_uri", "http://localhost:3000/eax9952/auth");
+        params.add("redirect_uri", "https://walab.info/lifeword/auth");
         params.add("grant_type", "authorization_code");
 
         HttpHeaders headers = new HttpHeaders();
@@ -77,7 +77,7 @@ public class AuthController {
                 Map<String, Object> responseBody = responseEntity.getBody();
                 String accessToken = (String) responseBody.get("access_token");
 
-                // ✅ 사용자 정보 가져오기
+                // 사용자 정보 가져오기
                 String userInfoUrl = "https://www.googleapis.com/oauth2/v2/userinfo";
                 HttpHeaders authHeaders = new HttpHeaders();
                 authHeaders.set("Authorization", "Bearer " + accessToken);
@@ -86,32 +86,34 @@ public class AuthController {
                 ResponseEntity<Map> userInfoResponse = restTemplate.exchange(userInfoUrl, HttpMethod.GET, authRequest, Map.class);
                 Map<String, Object> userInfo = userInfoResponse.getBody();
                 String email = (String) userInfo.get("email");
+                String oauthUid = (String) userInfo.get("id");
 
                 // 사용자 확인 (회원 여부 체크)
                 UserResponseDTO.VerifyResponse userResponse = userService.verifyUserSns(email);
 
                 // JWT 생성
                 if (userResponse.isExists()) {
+                    userService.updateProviderIfExists(email, "google", oauthUid);
                     String jwt = jwtUtil.generateToken(email);
 
                     // JWT를 HttpOnly 쿠키에 저장
                     ResponseCookie jwtCookie = ResponseCookie.from("jwt", jwt)
                             .httpOnly(true)
-                            .secure(false)
-                            .sameSite("Strict")
+                            .secure(true)
+                            .sameSite("none")
                             .path("/")
-                            .maxAge(60 * 60 * 24) // 1일 (초 단위)
+                            .maxAge(60 * 60 * 24)
                             .build();
                     response.setHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
                 }
-                System.out.println("✅ 응답 데이터: " + userResponse);
+                System.out.println("응답 데이터: " + userResponse);
 
                 return ResponseEntity.ok(userResponse);
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Google 로그인 실패");
             }
         } catch (Exception e) {
-            System.out.println("❌ Google 인증 중 오류 발생: " + e.getMessage());
+            System.out.println("Google 인증 중 오류 발생: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Google 인증 중 오류 발생: " + e.getMessage());
         }
     }
@@ -130,7 +132,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body("카카오 Authorization Code is required.");
         }
 
-        System.out.println("✅ 카카오 Authorization Code: " + code);
+        System.out.println("카카오 Authorization Code: " + code);
 
         // 카카오 OAuth 토큰 요청
         String tokenUrl = "https://kauth.kakao.com/oauth/token";
@@ -139,7 +141,9 @@ public class AuthController {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
         params.add("client_id", "87ba1491a0bee12f60f85d9ad8caebd4");
-        params.add("redirect_uri", "http://localhost:3000/eax9952/auth");
+        //params.add("redirect_uri", "http://localhost:3000/eax9952/auth");
+        params.add("redirect_uri", "https://walab.info/lifeword/auth");
+
         params.add("code", code);
 
         HttpHeaders headers = new HttpHeaders();
@@ -151,7 +155,7 @@ public class AuthController {
             if (responseEntity.getStatusCode() == HttpStatus.OK) {
                 Map<String, Object> responseBody = responseEntity.getBody();
                 String accessToken = (String) responseBody.get("access_token");
-                System.out.println("✅ 카카오 Access Token: " + accessToken);
+                System.out.println("카카오 Access Token: " + accessToken);
 
                 // 사용자 정보 가져오기
                 String userInfoUrl = "https://kapi.kakao.com/v2/user/me";
@@ -163,32 +167,35 @@ public class AuthController {
                 Map<String, Object> userInfo = userInfoResponse.getBody();
                 Map<String, Object> kakaoAccount = (Map<String, Object>) userInfo.get("kakao_account");
                 String email = (String) kakaoAccount.get("email");
+                String oauthUid = String.valueOf(userInfo.get("id"));
 
                 // 사용자 정보 확인 (회원 여부 체크)
                 UserResponseDTO.VerifyResponse userResponse = userService.verifyUserSns(email);
 
                 if (userResponse.isExists()) {
+                    userService.updateProviderIfExists(email, "kakao", oauthUid);
+
                     String jwt = jwtUtil.generateToken(email);
 
                     // JWT를 HttpOnly 쿠키에 저장
                     ResponseCookie jwtCookie = ResponseCookie.from("jwt", jwt)
                             .httpOnly(true)
-                            .secure(false)
-                            .sameSite("Strict")
+                            .secure(true)
+                            .sameSite("none")
                             .path("/")
-                            .maxAge(60 * 60 * 24) // 1일 (초 단위)
+                            .maxAge(60 * 60 * 24)
                             .build();
                     response.setHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
                 }
 
-                System.out.println("✅ 응답 데이터: " + userResponse);
+                System.out.println("응답 데이터: " + userResponse);
 
                 return ResponseEntity.ok(userResponse);
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("카카오 로그인 실패");
             }
         } catch (Exception e) {
-            System.out.println("❌ 카카오 인증 중 오류 발생: " + e.getMessage());
+            System.out.println(" 카카오 인증 중 오류 발생: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("카카오 인증 중 오류 발생: " + e.getMessage());
         }
     }
@@ -199,29 +206,29 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestParam String email, @RequestParam String password, HttpServletResponse response) {
         try {
-            // ✅ 사용자가 존재하는지 확인
+            //사용자가 존재하는지 확인
             UserResponseDTO.VerifyResponse userResponse = userService.verifyUserBibly(email, password);
 
-            // ✅ 사용자가 존재하면 JWT 생성
+            //사용자가 존재하면 JWT 생성
             if (userResponse.isExists()) {
                 String token = jwtUtil.generateToken(email);
 
-                // ✅ JWT를 HttpOnly 쿠키에 저장
+                //JWT를 HttpOnly 쿠키에 저장
                 ResponseCookie jwtCookie = ResponseCookie.from("jwt", token)
                         .httpOnly(true)
-                        .secure(false)  // HTTPS 환경에서만 사용 (로컬 테스트 시 false 가능)
-                        .sameSite("Strict") // CORS 문제 방지
+                        .secure(true)
+                        .sameSite("none")
                         .path("/")
-                        .maxAge(60 * 60 * 24) // 1일 (초 단위)
+                        .maxAge(60 * 60 * 24)
                         .build();
                 response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
             }
 
-            System.out.println("✅ 응답 데이터: " + userResponse);
+            System.out.println("응답 데이터: " + userResponse);
             return ResponseEntity.ok(userResponse);
 
         } catch (Exception e) {
-            System.out.println("❌ 로그인 실패: " + e.getMessage());
+            System.out.println("로그인 실패: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 실패: " + e.getMessage());
         }
     }
@@ -310,8 +317,8 @@ public class AuthController {
         // JWT 쿠키 삭제
         ResponseCookie jwtCookie = ResponseCookie.from("jwt", "")
                 .httpOnly(true)
-                .secure(false)
-                .sameSite("Strict")
+                .secure(true)
+                .sameSite("none")
                 .path("/")
                 // 쿠키 삭제 (0초로 설정)
                 .maxAge(0)
