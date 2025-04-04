@@ -41,3 +41,4 @@ out/
 config/
 /bible_backup.sql
 *.sql
+.env
