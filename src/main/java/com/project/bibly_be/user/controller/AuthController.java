@@ -7,6 +7,7 @@ import com.project.bibly_be.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -37,6 +38,15 @@ public class AuthController {
     private final UserService userService;
     private final JwtUtil jwtUtil;
 
+    @Value("${google.client.id}")
+    private String googleClientId;
+
+    @Value("${google.client.secret}")
+    private String googleClientSecret;
+
+    @Value("${kakao.client.id}")
+
+    private String kakaoClientId;
     public AuthController(
             AuthenticationManager authenticationManager,
             UserDetailsService userDetailsService,
@@ -62,8 +72,8 @@ public class AuthController {
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("code", code);
-        params.add("client_id", "925011581212-dk3lgg6dgktsourut3vo3ef1qi2ofg1c.apps.googleusercontent.com");
-        params.add("client_secret", "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");
+        params.add("client_id", "googleClientId");
+        params.add("client_secret", "googleClientSecret");
         params.add("redirect_uri", "https://walab.info/lifeword/auth");
         params.add("grant_type", "authorization_code");
 
@@ -140,7 +150,7 @@ public class AuthController {
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
-        params.add("client_id", "87ba1491a0bee12f60f85d9ad8caebd4");
+        params.add("client_id", "kakaoClientId");
         //params.add("redirect_uri", "http://localhost:3000/eax9952/auth");
         params.add("redirect_uri", "https://walab.info/lifeword/auth");
 
