@@ -181,4 +181,10 @@ public class SermonController {
                 size);
     }
 
+
+    @Operation(summary = "list of worship types from sermons table", description = "return worship types")
+    @GetMapping("/worship_types")
+    public List<String> getWorshipTypes() {
+        return sermonService.getWorshipTypes();
+    }
 }

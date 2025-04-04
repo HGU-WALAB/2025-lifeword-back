@@ -446,4 +446,10 @@ public class SermonService {
         sermonRepository.saveAll(sermons);
     }
 
+
+    public List<String> getWorshipTypes() {
+        List<String> worshipTypes = sermonRepository.getWorshipTypes();
+        return worshipTypes;
+    }
+
 }
