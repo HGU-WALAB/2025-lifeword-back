@@ -45,6 +45,8 @@ public interface SermonRepository extends JpaRepository<Sermon, Long>, JpaSpecif
     List<Sermon> searchBySermonTitleOrContent(@Param("keyword") String keyword);
     */
 
-
+    //get worship types
+    @Query("select distinct s.worshipType from Sermon s")
+    List<String> getWorshipTypes();
 
 }
