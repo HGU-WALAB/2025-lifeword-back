@@ -47,6 +47,8 @@ public class UserResponseDTO {
         private boolean exists;
         private Role role;
         private String job;
+        private String name;
+        private String email;
         private UUID userId;
     }
 }

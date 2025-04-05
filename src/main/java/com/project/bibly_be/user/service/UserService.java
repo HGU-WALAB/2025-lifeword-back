@@ -204,7 +204,7 @@ public class UserService {
                         .role(user.getRole())
                         .build())
                 .orElseGet(() -> {
-                    System.out.println("⚠️ 해당 이메일을 가진 사용자가 없음, 회원가입 필요: " + email);
+                    System.out.println("해당 이메일을 가진 사용자가 없음, 회원가입 필요: " + email);
                     return UserResponseDTO.VerifyResponse.builder()
                             .exists(false)  // 사용자가 없음을 표시
                             .userId(null)   // 신규 가입이므로 ID 없음
@@ -238,28 +238,26 @@ public class UserService {
         String existingProvider = providerList.get(idx);
         String existingUid = uidList.get(idx);
 
-        // (E) 만약 이미 값이 들어있다면 -> 예외 발생
+        // Provider가 이미 존재하면 그대로 유지하고 예외 발생시키지 않음
         if (existingProvider != null && !existingProvider.isEmpty()) {
-            throw new IllegalStateException(
-                    String.format("이미 '%s' 값이 존재합니다. 새 Provider(%s)로 수정 불가!",
-                            existingProvider, oauthProvider)
-            );
+            System.out.println(String.format("⚠기존 Provider(%s)가 존재하므로 업데이트하지 않음.", existingProvider));
+        } else {
+            //Provider가 없는 경우만 업데이트
+            providerList.set(idx, oauthProvider);
+            uidList.set(idx, oauthUid);
+            user.setOauthProvider(OauthProviderUtil.listToJson(providerList));
+            user.setOauthUid(OauthUidUtil.listToJson(uidList));
+
+            userRepository.save(user);
+            System.out.println(String.format("Provider 업데이트 완료: %s -> %s", email, oauthProvider));
         }
 
-        // (F) 값이 없는 경우(null 또는 "")만 새로 채워넣기
-        providerList.set(idx, oauthProvider);
-        uidList.set(idx, oauthUid);
-
-        user.setOauthProvider(OauthProviderUtil.listToJson(providerList));
-        user.setOauthUid(OauthUidUtil.listToJson(uidList));
-
-        // (G) DB 저장
-        userRepository.save(user);
-
-        // (H) 업데이트 후 응답 반환
+        // (E) 로그인 응답 반환
         return UserResponseDTO.VerifyResponse.builder()
                 .exists(true)
                 .userId(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
                 .job(user.getJob())
                 .role(user.getRole())
                 .build();
@@ -280,7 +278,7 @@ public class UserService {
             if (!passwordEncoder.matches(password, biblyUser.getPassword())) {
                 throw new InputMismatchException("비밀번호 틀림요");
             }
-            System.out.println("✅ 비밀번호 일치!");
+            System.out.println("비밀번호 일치!");
 
             return UserResponseDTO.VerifyResponse.builder()
                     .exists(true)
@@ -464,5 +462,3 @@ public class UserService {
     }
 
 }
-
-
