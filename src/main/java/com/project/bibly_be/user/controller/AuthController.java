@@ -22,6 +22,7 @@ import org.springframework.web.client.RestTemplate;
 import com.project.bibly_be.user.security.JwtAuthenticationFilter;
 import com.project.bibly_be.user.security.JwtUtil;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -47,6 +48,8 @@ public class AuthController {
     @Value("${kakao.client.id}")
 
     private String kakaoClientId;
+
+
     public AuthController(
             AuthenticationManager authenticationManager,
             UserDetailsService userDetailsService,
@@ -72,10 +75,11 @@ public class AuthController {
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("code", code);
-        params.add("client_id", "googleClientId");
-        params.add("client_secret", "googleClientSecret");
+        params.add("client_id", googleClientId);
+        params.add("client_secret", googleClientSecret);
         params.add("redirect_uri", "https://walab.info/lifeword/auth");
         params.add("grant_type", "authorization_code");
+
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -150,7 +154,7 @@ public class AuthController {
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
-        params.add("client_id", "kakaoClientId");
+        params.add("client_id", kakaoClientId);
         //params.add("redirect_uri", "http://localhost:3000/eax9952/auth");
         params.add("redirect_uri", "https://walab.info/lifeword/auth");
 
