@@ -77,7 +77,9 @@ public class AuthController {
         params.add("code", code);
         params.add("client_id", googleClientId);
         params.add("client_secret", googleClientSecret);
-        params.add("redirect_uri", "https://walab.info/lifeword/auth");
+        //params.add("redirect_uri", "https://walab.info/lifeword/auth");
+        params.add("redirect_uri", "http://localhost:3000/eax9952/auth");
+
         params.add("grant_type", "authorization_code");
 
 
@@ -113,8 +115,8 @@ public class AuthController {
                     // JWT를 HttpOnly 쿠키에 저장
                     ResponseCookie jwtCookie = ResponseCookie.from("jwt", jwt)
                             .httpOnly(true)
-                            .secure(true)
-                            .sameSite("none")
+                            .secure(false)
+                            .sameSite("strict")
                             .path("/")
                             .maxAge(60 * 60 * 24)
                             .build();
@@ -155,8 +157,8 @@ public class AuthController {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
         params.add("client_id", kakaoClientId);
-        //params.add("redirect_uri", "http://localhost:3000/eax9952/auth");
-        params.add("redirect_uri", "https://walab.info/lifeword/auth");
+        params.add("redirect_uri", "http://localhost:3000/eax9952/auth");
+        //params.add("redirect_uri", "https://walab.info/lifeword/auth");
 
         params.add("code", code);
 
@@ -194,8 +196,8 @@ public class AuthController {
                     // JWT를 HttpOnly 쿠키에 저장
                     ResponseCookie jwtCookie = ResponseCookie.from("jwt", jwt)
                             .httpOnly(true)
-                            .secure(true)
-                            .sameSite("none")
+                            .secure(false)
+                            .sameSite("strict")
                             .path("/")
                             .maxAge(60 * 60 * 24)
                             .build();
@@ -230,8 +232,8 @@ public class AuthController {
                 //JWT를 HttpOnly 쿠키에 저장
                 ResponseCookie jwtCookie = ResponseCookie.from("jwt", token)
                         .httpOnly(true)
-                        .secure(true)
-                        .sameSite("none")
+                        .secure(false)
+                        .sameSite("strict")
                         .path("/")
                         .maxAge(60 * 60 * 24)
                         .build();
@@ -331,8 +333,8 @@ public class AuthController {
         // JWT 쿠키 삭제
         ResponseCookie jwtCookie = ResponseCookie.from("jwt", "")
                 .httpOnly(true)
-                .secure(true)
-                .sameSite("none")
+                .secure(false)
+                .sameSite("strict")
                 .path("/")
                 // 쿠키 삭제 (0초로 설정)
                 .maxAge(0)
